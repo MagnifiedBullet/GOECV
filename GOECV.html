@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garden of Eden Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #dialogue-box {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            width: 80%;
+        }
+
+        #dialogue-box img {
+            max-width: 50px;
+            vertical-align: middle;
+        }
+
+        #dialogue-box p {
+            display: inline;
+            margin-left: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="dialogue-box">
+        <img id="npc-portrait" src="" alt="NPC Portrait">
+        <p id="npc-dialogue"></p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game Variables
+        const TILE_SIZE = 64;
+        const PLAYER_SPEED = 4;
+        const ASSETS_URL = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/';
+
+        const player = {
+            x: 100,
+            y: 100,
+            sprite: new Image(),
+            frame: 0,
+            frameMax: 3,
+            animationDelay: 10,
+            animationCounter: 0,
+            idle: `${ASSETS_URL}player_idle.png`,
+            walking: `${ASSETS_URL}player_walk.png`,
+            isWalking: false
+        };
+
+        const npc = {
+            x: 300,
+            y: 200,
+            sprite: new Image(),
+            frame: 0,
+            frameMax: 3,
+            animationDelay: 10,
+            animationCounter: 0,
+            idle: `${ASSETS_URL}npc_idle.png`,
+            dialogue: [
+                { text: "Hello, traveler! Welcome to the Garden of Eden.", portrait: `${ASSETS_URL}npc_portrait.png` },
+                { text: "Feel free to explore the area.", portrait: `${ASSETS_URL}npc_portrait.png` }
+            ]
+        };
+
+        player.sprite.src = player.idle;
+        npc.sprite.src = npc.idle;
+
+        // Dialogue System
+        const dialogueBox = document.getElementById('dialogue-box');
+        const npcPortrait = document.getElementById('npc-portrait');
+        const npcDialogue = document.getElementById('npc-dialogue');
+        let currentDialogueIndex = 0;
+        let isTalking = false;
+
+        function showDialogue() {
+            const dialogue = npc.dialogue[currentDialogueIndex];
+            npcPortrait.src = dialogue.portrait;
+            npcDialogue.textContent = dialogue.text;
+            dialogueBox.style.display = 'block';
+        }
+
+        function hideDialogue() {
+            dialogueBox.style.display = 'none';
+        }
+
+        // Controls
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === 'Enter' && isTalking) {
+                currentDialogueIndex++;
+                if (currentDialogueIndex < npc.dialogue.length) {
+                    showDialogue();
+                } else {
+                    hideDialogue();
+                    isTalking = false;
+                    currentDialogueIndex = 0;
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        function movePlayer() {
+            player.isWalking = false;
+            if (keys['ArrowUp']) {
+                player.y -= PLAYER_SPEED;
+                player.isWalking = true;
+            }
+            if (keys['ArrowDown']) {
+                player.y += PLAYER_SPEED;
+                player.isWalking = true;
+            }
+            if (keys['ArrowLeft']) {
+                player.x -= PLAYER_SPEED;
+                player.isWalking = true;
+            }
+            if (keys['ArrowRight']) {
+                player.x += PLAYER_SPEED;
+                player.isWalking = true;
+            }
+        }
+
+        function checkInteraction() {
+            const dx = player.x - npc.x;
+            const dy = player.y - npc.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < TILE_SIZE) {
+                isTalking = true;
+                showDialogue();
+            }
+        }
+
+        function animateSprite(entity) {
+            entity.animationCounter++;
+            if (entity.animationCounter >= entity.animationDelay) {
+                entity.frame = (entity.frame + 1) % entity.frameMax;
+                entity.animationCounter = 0;
+            }
+        }
+
+        function drawSprite(entity) {
+            ctx.drawImage(
+                entity.sprite,
+                entity.frame * TILE_SIZE,
+                0,
+                TILE_SIZE,
+                TILE_SIZE,
+                entity.x,
+                entity.y,
+                TILE_SIZE,
+                TILE_SIZE
+            );
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Move Player
+            movePlayer();
+
+            // Change Player Sprite
+            player.sprite.src = player.isWalking ? player.walking : player.idle;
+
+            // Animate and Draw NPC
+            animateSprite(npc);
+            drawSprite(npc);
+
+            // Animate and Draw Player
+            animateSprite(player);
+            drawSprite(player);
+
+            // Interaction Check
+            if (!isTalking && keys[' ']) {
+                checkInteraction();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+
+    </script>
+</body>
+</html>
+
