@@ -86,6 +86,24 @@
             ]
         };
 
+        const assetsToLoad = [player.idle, player.walking, npc.idle, npc.dialogue[0].portrait];
+        let assetsLoaded = 0;
+        let gameReady = false;
+
+        function preloadAssets() {
+            assetsToLoad.forEach((src) => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    assetsLoaded++;
+                    if (assetsLoaded === assetsToLoad.length) {
+                        gameReady = true;
+                        gameLoop();
+                    }
+                };
+            });
+        }
+
         player.sprite.src = player.idle;
         npc.sprite.src = npc.idle;
 
@@ -180,6 +198,8 @@
         }
 
         function gameLoop() {
+            if (!gameReady) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Move Player
@@ -204,9 +224,8 @@
             requestAnimationFrame(gameLoop);
         }
 
-        gameLoop();
+        preloadAssets();
 
     </script>
 </body>
 </html>
-
