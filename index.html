@@ -76,8 +76,7 @@
             animationDelay: 10,
             animationCounter: 0,
             isWalking: false,
-            spriteX: 16, // Warrior's coordinates
-            spriteY: 0
+            direction: 'down' // Tracks player direction ('down', 'up')
         };
 
         // NPCs (Random Entities)
@@ -125,10 +124,12 @@
             if (keys['ArrowUp']) {
                 player.y -= PLAYER_SPEED;
                 player.isWalking = true;
+                player.direction = 'up';
             }
             if (keys['ArrowDown']) {
                 player.y += PLAYER_SPEED;
                 player.isWalking = true;
+                player.direction = 'down';
             }
             if (keys['ArrowLeft']) {
                 player.x -= PLAYER_SPEED;
@@ -160,21 +161,24 @@
             }
         }
 
-        function drawTile(x, y, spriteX, spriteY) {
+        function drawTileIso(x, y, spriteX, spriteY) {
+            const isoX = (x - y) * TILE_SIZE / 2 + canvas.width / 2;
+            const isoY = (x + y) * TILE_SIZE / 4;
             ctx.drawImage(
                 tileset,
                 spriteX, spriteY,
                 16, 16, // Source size (16x16 from tileset)
-                x, y,
+                isoX, isoY,
                 TILE_SIZE, TILE_SIZE // Drawn size (scaled to 64x64)
             );
         }
 
         function drawSprite(entity) {
+            const spriteY = entity.direction === 'down' ? 0 : 8; // First row for front, second row for back
             ctx.drawImage(
                 entity.sprite,
-                entity.frame * 8 + entity.spriteX,
-                entity.spriteY,
+                entity.frame * 8, // Frame animation
+                spriteY, // Row selection based on direction
                 8,
                 8,
                 entity.x,
@@ -187,10 +191,12 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Grass Tiles
-            for (let i = 0; i < canvas.width; i += TILE_SIZE) {
-                for (let j = 0; j < canvas.height; j += TILE_SIZE) {
-                    drawTile(i, j, grassTile.spriteX, grassTile.spriteY);
+            // Draw Grass Tiles in Isometric Arrangement
+            const mapWidth = Math.ceil(canvas.width / TILE_SIZE);
+            const mapHeight = Math.ceil(canvas.height / TILE_SIZE);
+            for (let x = 0; x < mapWidth; x++) {
+                for (let y = 0; y < mapHeight; y++) {
+                    drawTileIso(x, y, grassTile.spriteX, grassTile.spriteY);
                 }
             }
 
@@ -231,3 +237,4 @@
     </script>
 </body>
 </html>
+
