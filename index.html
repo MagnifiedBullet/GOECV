@@ -53,91 +53,63 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
+        console.log("Game canvas initialized...");
+
         // Game Variables
         const TILE_SIZE = 64;
         const PLAYER_SPEED = 4;
         const ASSETS_URL = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/';
 
+        const tileset = new Image();
+        tileset.src = `${ASSETS_URL}tileset.png`;
+
+        const entities = new Image();
+        entities.src = `${ASSETS_URL}entities.png`;
+
         const player = {
             x: 100,
             y: 100,
-            sprite: new Image(),
+            sprite: entities,
             frame: 0,
             frameMax: 3,
             animationDelay: 10,
             animationCounter: 0,
-            idle: `${ASSETS_URL}player_idle.png`,
-            walking: `${ASSETS_URL}player_walk.png`,
-            isWalking: false
+            isWalking: false,
+            spriteX: 0, // X coordinate on the sprite sheet for the player
+            spriteY: 0  // Y coordinate on the sprite sheet for the player
         };
 
-        const npc = {
-            x: 300,
-            y: 200,
-            sprite: new Image(),
-            frame: 0,
-            frameMax: 3,
-            animationDelay: 10,
-            animationCounter: 0,
-            idle: `${ASSETS_URL}npc_idle.png`,
-            dialogue: [
-                { text: "Hello, traveler! Welcome to the Garden of Eden.", portrait: `${ASSETS_URL}npc_portrait.png` },
-                { text: "Feel free to explore the area.", portrait: `${ASSETS_URL}npc_portrait.png` }
-            ]
-        };
+        const npcs = [
+            { x: 300, y: 200, spriteX: 128, spriteY: 0, dialogue: "Hello, traveler! Welcome to the Garden of Eden." },
+            { x: 400, y: 300, spriteX: 192, spriteY: 0, dialogue: "It's a lovely day for exploring, isn't it?" },
+            { x: 500, y: 400, spriteX: 256, spriteY: 0, dialogue: "Be careful out there!" }
+        ];
 
-        const assetsToLoad = [player.idle, player.walking, npc.idle, npc.dialogue[0].portrait];
-        let assetsLoaded = 0;
-        let gameReady = false;
-
-        function preloadAssets() {
-            assetsToLoad.forEach((src) => {
-                const img = new Image();
-                img.src = src;
-                img.onload = () => {
-                    assetsLoaded++;
-                    if (assetsLoaded === assetsToLoad.length) {
-                        gameReady = true;
-                        gameLoop();
-                    }
-                };
-            });
-        }
-
-        player.sprite.src = player.idle;
-        npc.sprite.src = npc.idle;
+        const grassTile = { spriteX: 64, spriteY: 0 };
 
         // Dialogue System
         const dialogueBox = document.getElementById('dialogue-box');
         const npcPortrait = document.getElementById('npc-portrait');
         const npcDialogue = document.getElementById('npc-dialogue');
-        let currentDialogueIndex = 0;
-        let isTalking = false;
+        let currentDialogueIndex = null;
 
-        function showDialogue() {
-            const dialogue = npc.dialogue[currentDialogueIndex];
-            npcPortrait.src = dialogue.portrait;
-            npcDialogue.textContent = dialogue.text;
+        function showDialogue(index) {
+            const npc = npcs[index];
+            npcDialogue.textContent = npc.dialogue;
             dialogueBox.style.display = 'block';
         }
 
         function hideDialogue() {
             dialogueBox.style.display = 'none';
+            currentDialogueIndex = null;
         }
 
         // Controls
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.key] = true;
-            if (e.key === 'Enter' && isTalking) {
-                currentDialogueIndex++;
-                if (currentDialogueIndex < npc.dialogue.length) {
-                    showDialogue();
-                } else {
-                    hideDialogue();
-                    isTalking = false;
-                    currentDialogueIndex = 0;
-                }
+            if (e.key === 'Enter' && currentDialogueIndex !== null) {
+                hideDialogue();
             }
         });
 
@@ -166,13 +138,15 @@
         }
 
         function checkInteraction() {
-            const dx = player.x - npc.x;
-            const dy = player.y - npc.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < TILE_SIZE) {
-                isTalking = true;
-                showDialogue();
-            }
+            npcs.forEach((npc, index) => {
+                const dx = player.x - npc.x;
+                const dy = player.y - npc.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < TILE_SIZE) {
+                    currentDialogueIndex = index;
+                    showDialogue(index);
+                }
+            });
         }
 
         function animateSprite(entity) {
@@ -183,11 +157,21 @@
             }
         }
 
+        function drawTile(x, y, spriteX, spriteY) {
+            ctx.drawImage(
+                tileset,
+                spriteX, spriteY,
+                TILE_SIZE, TILE_SIZE,
+                x, y,
+                TILE_SIZE, TILE_SIZE
+            );
+        }
+
         function drawSprite(entity) {
             ctx.drawImage(
                 entity.sprite,
-                entity.frame * TILE_SIZE,
-                0,
+                entity.frame * TILE_SIZE + entity.spriteX,
+                entity.spriteY,
                 TILE_SIZE,
                 TILE_SIZE,
                 entity.x,
@@ -198,34 +182,50 @@
         }
 
         function gameLoop() {
-            if (!gameReady) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Grass Tiles
+            for (let i = 0; i < canvas.width; i += TILE_SIZE) {
+                for (let j = 0; j < canvas.height; j += TILE_SIZE) {
+                    drawTile(i, j, grassTile.spriteX, grassTile.spriteY);
+                }
+            }
 
             // Move Player
             movePlayer();
 
-            // Change Player Sprite
-            player.sprite.src = player.isWalking ? player.walking : player.idle;
+            // Draw NPCs
+            npcs.forEach((npc) => {
+                ctx.drawImage(
+                    entities,
+                    npc.spriteX,
+                    npc.spriteY,
+                    TILE_SIZE,
+                    TILE_SIZE,
+                    npc.x,
+                    npc.y,
+                    TILE_SIZE,
+                    TILE_SIZE
+                );
+            });
 
-            // Animate and Draw NPC
-            animateSprite(npc);
-            drawSprite(npc);
-
-            // Animate and Draw Player
+            // Draw Player
             animateSprite(player);
             drawSprite(player);
 
-            // Interaction Check
-            if (!isTalking && keys[' ']) {
+            // Check Interaction
+            if (currentDialogueIndex === null && keys[' ']) {
                 checkInteraction();
             }
 
             requestAnimationFrame(gameLoop);
         }
 
-        preloadAssets();
-
+        tileset.onload = () => {
+            entities.onload = () => {
+                gameLoop();
+            };
+        };
     </script>
 </body>
 </html>
