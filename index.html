@@ -56,16 +56,17 @@
         console.log("Game canvas initialized...");
 
         // Game Variables
-        const TILE_SIZE = 64;
+        const TILE_SIZE = 64; // In-game tile size (scaling up from the asset tile size)
         const PLAYER_SPEED = 4;
         const ASSETS_URL = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/';
 
         const tileset = new Image();
-        tileset.src = `${ASSETS_URL}tileset.png`;
+        tileset.src = `${ASSETS_URL}Isometric_MedievalFantasy_Tiles.png`;
 
         const entities = new Image();
-        entities.src = `${ASSETS_URL}entities.png`;
+        entities.src = `${ASSETS_URL}IsometricTRPGAssetPack_Entities.png`;
 
+        // Player (Warrior-like Character)
         const player = {
             x: 100,
             y: 100,
@@ -75,17 +76,19 @@
             animationDelay: 10,
             animationCounter: 0,
             isWalking: false,
-            spriteX: 0, // X coordinate on the sprite sheet for the player
-            spriteY: 0  // Y coordinate on the sprite sheet for the player
+            spriteX: 16, // Warrior's coordinates
+            spriteY: 0
         };
 
+        // NPCs (Random Entities)
         const npcs = [
-            { x: 300, y: 200, spriteX: 128, spriteY: 0, dialogue: "Hello, traveler! Welcome to the Garden of Eden." },
-            { x: 400, y: 300, spriteX: 192, spriteY: 0, dialogue: "It's a lovely day for exploring, isn't it?" },
-            { x: 500, y: 400, spriteX: 256, spriteY: 0, dialogue: "Be careful out there!" }
+            { x: 300, y: 200, spriteX: 24, spriteY: 8, dialogue: "Hello, traveler! Welcome to the Garden of Eden." },
+            { x: 400, y: 300, spriteX: 8, spriteY: 16, dialogue: "It's a lovely day for exploring, isn't it?" },
+            { x: 500, y: 400, spriteX: 32, spriteY: 24, dialogue: "Be careful out there!" }
         ];
 
-        const grassTile = { spriteX: 64, spriteY: 0 };
+        // Grass Tile (2nd Column, 1st Row)
+        const grassTile = { spriteX: 16, spriteY: 0 };
 
         // Dialogue System
         const dialogueBox = document.getElementById('dialogue-box');
@@ -161,19 +164,19 @@
             ctx.drawImage(
                 tileset,
                 spriteX, spriteY,
-                TILE_SIZE, TILE_SIZE,
+                16, 16, // Source size (16x16 from tileset)
                 x, y,
-                TILE_SIZE, TILE_SIZE
+                TILE_SIZE, TILE_SIZE // Drawn size (scaled to 64x64)
             );
         }
 
         function drawSprite(entity) {
             ctx.drawImage(
                 entity.sprite,
-                entity.frame * TILE_SIZE + entity.spriteX,
+                entity.frame * 8 + entity.spriteX,
                 entity.spriteY,
-                TILE_SIZE,
-                TILE_SIZE,
+                8,
+                8,
                 entity.x,
                 entity.y,
                 TILE_SIZE,
@@ -200,8 +203,7 @@
                     entities,
                     npc.spriteX,
                     npc.spriteY,
-                    TILE_SIZE,
-                    TILE_SIZE,
+                    8, 8,
                     npc.x,
                     npc.y,
                     TILE_SIZE,
