@@ -174,13 +174,13 @@
         }
 
         function drawSprite(entity) {
-            const spriteY = entity.direction === 'down' ? 0 : 8; // First row for front, second row for back
+            const spriteY = entity.direction === 'down' ? 0 : 16; // First row for front, second row for back
             ctx.drawImage(
                 entity.sprite,
-                entity.frame * 8, // Frame animation
+                entity.frame * 16, // Frame animation
                 spriteY, // Row selection based on direction
-                8,
-                8,
+                16,
+                16,
                 entity.x,
                 entity.y,
                 TILE_SIZE,
@@ -209,11 +209,11 @@
                     entities,
                     npc.spriteX,
                     npc.spriteY,
-                    8, 8,
+                    16, 16, // Correct sprite size
                     npc.x,
                     npc.y,
                     TILE_SIZE,
-                    TILE_SIZE
+                    TILE_SIZE // Scale up
                 );
             });
 
@@ -237,4 +237,3 @@
     </script>
 </body>
 </html>
-
