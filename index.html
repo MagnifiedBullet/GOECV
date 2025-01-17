@@ -3,182 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isometric Pixel Art</title>
+    <title>Isometric Pixel Art Game</title>
     <style>
         body {
             background-color: #1e1e2c;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
-        .grid {
-            position: relative;
-            width: 256px;
-            height: 256px;
-        }
-        .tile {
-            position: absolute;
-            width: 64px;
-            height: 32px;
-            background-size: contain;
-            background-repeat: no-repeat;
-        }
-
-        /* Position and layers of tiles */
-        .water {
-            background-image: url('Assets/isometric tileset/separated images/tile_104.png');
-        }
-        .water_NE {
-            background-image: url('Assets/isometric tileset/separated images/tile_105.png');
-        }
-        .water_NW {
-            background-image: url('Assets/isometric tileset/separated images/tile_106.png');
-        }
-        .water_SE {
-            background-image: url('Assets/isometric tileset/separated images/tile_107.png');
-        }
-        .water_SW {
-            background-image: url('Assets/isometric tileset/separated images/tile_108.png');
-        }
-        .water_N {
-            background-image: url('Assets/isometric tileset/separated images/tile_109.png');
-        }
-        .water_S {
-            background-image: url('Assets/isometric tileset/separated images/tile_110.png');
-        }
-        .water_W {
-            background-image: url('Assets/isometric tileset/separated images/tile_111.png');
-        }
-        .water_E {
-            background-image: url('Assets/isometric tileset/separated images/tile_112.png');
-        }
-        .water_All {
-            background-image: url('Assets/isometric tileset/separated images/tile_113.png');
-        }
-        .water_inv {
-            background-image: url('Assets/isometric tileset/separated images/tile_114.png');
-        }
-        .rock_64 {
-            background-image: url('Assets/isometric tileset/separated images/tile_064.png');
-        }
-        .rock_67 {
-            background-image: url('Assets/isometric tileset/separated images/tile_067.png');
-        }
-        .rocktile_61 {
-            background-image: url('Assets/isometric tileset/separated images/tile_061.png');
-        }
-        .rocktile_63 {
-            background-image: url('Assets/isometric tileset/separated images/tile_108.png');
-        }
-        .dirt_W {
-            background-image: url('Assets/isometric tileset/separated images/tile_000.png');
-        }
-        .dirt_S+NE {
-            background-image: url('Assets/isometric tileset/separated images/tile_001.png');
-        }
-        .dirt_N+SE {
-            background-image: url('Assets/isometric tileset/separated images/tile_002.png');
-        }
-        .dirt_Full {
-            background-image: url('Assets/isometric tileset/separated images/tile_003.png');
-        }
-        .dirt_S {
-            background-image: url('Assets/isometric tileset/separated images/tile_004.png');
-        }
-        .dirt_All {
-            background-image: url('Assets/isometric tileset/separated images/tile_066.png');
-        }
-        .dirt_crack {
-            background-image: url('Assets/isometric tileset/separated images/tile_067.png');
-        }
-        .dirt_Allv2 {
-            background-image: url('Assets/isometric tileset/separated images/tile_008.png');
-        }
-        .dirt {
-            background-image: url('Assets/isometric tileset/separated images/tile_108.png');
-        }
-        .dirt_SW {
-            background-image: url('Assets/isometric tileset/separated images/tile_010.png');
-        }
-        .lgrass_024 {
-            background-image: url('Assets/isometric tileset/separated images/tile_024.png');
-        }
-        .dgrass_040 {
-            background-image: url('Assets/isometric tileset/separated images/tile_040.png');
-        }
-        .flowers_041 {
-            background-image: url('Assets/isometric tileset/separated images/tile_041.png');
-        }
-        .flowers_046 {
-            background-image: url('Assets/isometric tileset/separated images/tile_046.png');
-        }
-
-        /* Isometric Positions */
-        .tile.water {
-            left: 0; top: 96px;
-        }
-        .tile.water:nth-child(2) {
-            left: 64px; top: 128px;
-        }
-        .tile.water:nth-child(3) {
-            left: 128px; top: 160px;
-        }
-        .tile.water:nth-child(4) {
-            left: 0; top: 128px;
-        }
-        .tile.water:nth-child(5) {
-            left: 64px; top: 160px;
-        }
-        .tile.water:nth-child(6) {
-            left: 128px; top: 192px;
-        }
-        .tile.lgrass_024 {
-            left: 64px; top: 64px;
-        }
-        .tile.dirt {
-            left: 64px; top: 96px;
-        }
-        .tile.flowers_041 {
-            left: 96px; top: 64px;
-        }
-        .tile.rock_64 {
-            left: 128px; top: 32px;
-        }
-        .tile.dgrass_040 {
-            left: 32px; top: 64px;
-        }
-        .tile.rocktile_61 {
-            left: 96px; top: 32px;
+        canvas {
+            display: block;
+            margin: auto;
+            background: url('https://github.com/MagnifiedBullet/GOECV/blob/main/Assets/Background.PNG') no-repeat center center;
+            background-size: cover;
         }
     </style>
 </head>
 <body>
-    <div class="grid">
-        <!-- Water tiles -->
-        <div class="tile water"></div>
-        <div class="tile water"></div>
-        <div class="tile water"></div>
-        <div class="tile water"></div>
-        <div class="tile water"></div>
-        <div class="tile water"></div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-        <!-- Grass tile -->
-        <div class="tile lgrass_024"></div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-        <!-- Dirt tile -->
-        <div class="tile dirt"></div>
+        // Player properties
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            width: 32,
+            height: 32,
+            color: 'red',
+            speed: 5
+        };
 
-        <!-- Flowers tile -->
-        <div class="tile flowers_041"></div>
+        // Key press tracking
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
 
-        <!-- Rocks tile -->
-        <div class="tile rock_64"></div>
+        // Event listeners for key presses
+        window.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+        });
 
-        <!-- Additional elements -->
-        <div class="tile dgrass_040"></div>
-        <div class="tile rocktile_61"></div>
-    </div>
+        window.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+        });
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background (already set in CSS as canvas background)
+
+            // Update player position
+            if (keys.ArrowUp) player.y -= player.speed;
+            if (keys.ArrowDown) player.y += player.speed;
+            if (keys.ArrowLeft) player.x -= player.speed;
+            if (keys.ArrowRight) player.x += player.speed;
+
+            // Prevent player from going out of bounds
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game loop
+        gameLoop();
+    </script>
 </body>
 </html>
