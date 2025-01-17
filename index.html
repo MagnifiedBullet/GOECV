@@ -25,7 +25,8 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const TILE_SIZE = 64; // Size of each isometric tile
+    const TILE_SIZE = 64; // Rendered tile size
+    const TILE_SRC_SIZE = 32; // Original sprite size of tiles
     const mapWidth = 10;
     const mapHeight = 10;
 
@@ -34,7 +35,7 @@
         y: 5,
         speed: 0.1,
         frame: 0,
-        state: 'idle', // Can be 'idle' or 'moving'
+        state: 'idle',
         texture: new Image()
     };
 
@@ -50,8 +51,8 @@
         grass: new Image()
     };
 
-    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Isometric_MedievalFantasy_Tiles.png'; // Grass tileset from GitHub
-    player.texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/player_idle.png'; // Replace with player idle texture
+    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Isometric_MedievalFantasy_Tiles.png';
+    player.texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/player_idle.png';
 
     npcs[0].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc1_idle.png';
     npcs[1].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc2_idle.png';
@@ -63,24 +64,38 @@
         }
     }
 
-    function drawTile(x, y, texture, cropX = 16, cropY = 0, cropWidth = 16, cropHeight = 16) {
-        // Grass tile is at (16, 0) in the spritesheet
+    function drawTile(x, y, texture, cropX = 0, cropY = 0) {
         const isoX = (x - y) * TILE_SIZE / 2 + canvas.width / 2;
         const isoY = (x + y) * TILE_SIZE / 4 + canvas.height / 4;
-        ctx.drawImage(texture, cropX, cropY, cropWidth, cropHeight, isoX, isoY, TILE_SIZE, TILE_SIZE);
+
+        ctx.drawImage(
+            texture,
+            cropX, cropY, // Cropping coordinates from the tileset
+            TILE_SRC_SIZE, TILE_SRC_SIZE, // Cropping dimensions (32x32)
+            isoX, isoY, // Placement on canvas
+            TILE_SIZE, TILE_SIZE // Scaled tile size (64x64)
+        );
     }
 
     function drawMap() {
         map.forEach(tile => {
-            drawTile(tile.x, tile.y, textures.grass, 16, 0, 16, 16);
+            // Assuming the grass tile is located at (32, 0) in the spritesheet (adjust this as needed)
+            drawTile(tile.x, tile.y, textures.grass, 32, 0);
         });
     }
 
     function drawEntity(entity) {
         const isoX = (entity.x - entity.y) * TILE_SIZE / 2 + canvas.width / 2;
         const isoY = (entity.x + entity.y) * TILE_SIZE / 4 + canvas.height / 4;
-        const frameX = Math.floor(entity.frame) * TILE_SIZE;
-        ctx.drawImage(entity.texture, frameX, 0, TILE_SIZE, TILE_SIZE, isoX, isoY - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+        const frameX = Math.floor(entity.frame) * TILE_SRC_SIZE;
+
+        ctx.drawImage(
+            entity.texture,
+            frameX, 0, // Assuming animation frames are horizontal
+            TILE_SRC_SIZE, TILE_SRC_SIZE,
+            isoX, isoY - TILE_SIZE / 2, // Adjust to position sprite above ground
+            TILE_SIZE, TILE_SIZE
+        );
     }
 
     function drawPlayer() {
