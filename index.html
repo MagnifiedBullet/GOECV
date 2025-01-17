@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garden of Eeden Isometric Game</title>
+    <title>Isometric Garden Scene</title>
     <style>
         body {
             margin: 0;
@@ -12,7 +12,7 @@
         }
         canvas {
             display: block;
-            background: #87ceeb;
+            background: #2d2d34; /* Dark background to highlight tiles */
         }
     </style>
 </head>
@@ -26,147 +26,72 @@
     canvas.height = window.innerHeight;
 
     const TILE_SIZE = 64; // Rendered tile size
-    const TILE_SRC_SIZE = 32; // Original sprite size of tiles
-    const mapWidth = 10;
-    const mapHeight = 10;
-
-    const player = {
-        x: 5,
-        y: 5,
-        speed: 0.1,
-        frame: 0,
-        state: 'idle',
-        texture: new Image()
-    };
-
-    const npcs = [
-        { x: 3, y: 3, state: 'idle', frame: 0, texture: new Image(), message: "Welcome to the Garden of Eeden!" },
-        { x: 7, y: 2, state: 'idle', frame: 0, texture: new Image(), message: "This is a place of wonder and wisdom." },
-        { x: 6, y: 6, state: 'idle', frame: 0, texture: new Image(), message: "Seek knowledge, and you shall find it." }
-    ];
-
-    const map = [];
+    const TILE_SRC_SIZE = 32; // Original tile size in the sprite sheet
+    const mapWidth = 7;
+    const mapHeight = 7;
 
     const textures = {
-        grass: new Image()
+        water: new Image(),
+        grass: new Image(),
+        dirt: new Image(),
+        flowers: new Image(),
+        rocks: new Image()
     };
 
-    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Isometric_MedievalFantasy_Tiles.png';
-    player.texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/player_idle.png';
+    // Load tile textures from GitHub
+    textures.water.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/water.png';
+    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/grass.png';
+    textures.dirt.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/dirt.png';
+    textures.flowers.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/flowers.png';
+    textures.rocks.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/rocks.png';
 
-    npcs[0].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc1_idle.png';
-    npcs[1].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc2_idle.png';
-    npcs[2].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc3_idle.png';
+    // Map layout
+    const map = [
+        ['water', 'water', 'water', 'water', 'water', 'water', 'water'],
+        ['water', 'dirt',  'grass', 'grass', 'grass', 'dirt',  'water'],
+        ['water', 'dirt',  'grass', 'flowers', 'grass', 'dirt',  'water'],
+        ['water', 'dirt',  'grass', 'grass', 'rocks',  'dirt',  'water'],
+        ['water', 'dirt',  'grass', 'grass', 'grass', 'dirt',  'water'],
+        ['water', 'dirt',  'dirt',  'dirt',  'dirt',  'dirt',  'water'],
+        ['water', 'water', 'water', 'water', 'water', 'water', 'water']
+    ];
 
-    for (let y = 0; y < mapHeight; y++) {
-        for (let x = 0; x < mapWidth; x++) {
-            map.push({ x, y });
-        }
-    }
-
-    function drawTile(x, y, texture, cropX = 0, cropY = 0) {
+    function drawTile(x, y, texture) {
         const isoX = (x - y) * TILE_SIZE / 2 + canvas.width / 2;
         const isoY = (x + y) * TILE_SIZE / 4 + canvas.height / 4;
 
         ctx.drawImage(
             texture,
-            cropX, cropY, // Cropping coordinates from the tileset
-            TILE_SRC_SIZE, TILE_SRC_SIZE, // Cropping dimensions (32x32)
+            0, 0, TILE_SRC_SIZE, TILE_SRC_SIZE, // Crop entire 32x32 tile
             isoX, isoY, // Placement on canvas
-            TILE_SIZE, TILE_SIZE // Scaled tile size (64x64)
+            TILE_SIZE, TILE_SIZE // Scaled size (64x64)
         );
     }
 
     function drawMap() {
-        map.forEach(tile => {
-            // Assuming the grass tile is located at (32, 0) in the spritesheet (adjust this as needed)
-            drawTile(tile.x, tile.y, textures.grass, 32, 0);
-        });
-    }
-
-    function drawEntity(entity) {
-        const isoX = (entity.x - entity.y) * TILE_SIZE / 2 + canvas.width / 2;
-        const isoY = (entity.x + entity.y) * TILE_SIZE / 4 + canvas.height / 4;
-        const frameX = Math.floor(entity.frame) * TILE_SRC_SIZE;
-
-        ctx.drawImage(
-            entity.texture,
-            frameX, 0, // Assuming animation frames are horizontal
-            TILE_SRC_SIZE, TILE_SRC_SIZE,
-            isoX, isoY - TILE_SIZE / 2, // Adjust to position sprite above ground
-            TILE_SIZE, TILE_SIZE
-        );
-    }
-
-    function drawPlayer() {
-        drawEntity(player);
-    }
-
-    function drawNPCs() {
-        npcs.forEach(drawEntity);
-    }
-
-    function checkCollision(entity) {
-        return Math.floor(player.x) === entity.x && Math.floor(player.y) === entity.y;
-    }
-
-    function interactWithNPCs() {
-        npcs.forEach(npc => {
-            if (checkCollision(npc)) {
-                alert(npc.message);
+        for (let y = 0; y < mapHeight; y++) {
+            for (let x = 0; x < mapWidth; x++) {
+                const tileType = map[y][x];
+                const texture = textures[tileType];
+                drawTile(x, y, texture);
             }
-        });
-    }
-
-    function updateFrames() {
-        player.frame += 0.1;
-        if (player.frame >= 4) player.frame = 0; // Assuming 4 frames per animation
-
-        npcs.forEach(npc => {
-            npc.frame += 0.05;
-            if (npc.frame >= 4) npc.frame = 0; // Assuming 4 frames per NPC animation
-        });
+        }
     }
 
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawMap();
-        drawNPCs();
-        drawPlayer();
-        updateFrames();
         requestAnimationFrame(gameLoop);
     }
 
-    window.addEventListener('keydown', (e) => {
-        player.state = 'moving';
-        switch (e.key) {
-            case 'ArrowUp':
-            case 'w':
-                player.y -= player.speed;
-                break;
-            case 'ArrowDown':
-            case 's':
-                player.y += player.speed;
-                break;
-            case 'ArrowLeft':
-            case 'a':
-                player.x -= player.speed;
-                break;
-            case 'ArrowRight':
-            case 'd':
-                player.x += player.speed;
-                break;
-        }
-        interactWithNPCs();
-    });
+    // Wait for all textures to load before starting the game loop
+    const promises = Object.values(textures).map(texture => new Promise(resolve => {
+        texture.onload = resolve;
+    }));
 
-    window.addEventListener('keyup', () => {
-        player.state = 'idle';
-    });
-
-    textures.grass.onload = () => {
+    Promise.all(promises).then(() => {
         gameLoop();
-    };
+    });
 </script>
 </body>
 </html>
