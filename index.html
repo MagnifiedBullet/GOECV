@@ -3,94 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isometric Garden Scene</title>
+    <title>Isometric Pixel Art</title>
     <style>
-        body {https://scrabling.itch.io/pixel-isometric-tiles
+        body {
+            background-color: #1e1e2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
         }
-        canvas {
-            display: block;
-            background: #2d2d34; /* Dark background to highlight tiles */
+        .grid {
+            position: relative;
+            width: 256px; /* Adjust based on tile size */
+            height: 256px; /* Adjust based on tile size */
+        }
+        .tile {
+            position: absolute;
+            width: 64px;
+            height: 32px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        /* Position and layers of tiles */
+        .water {
+            background-image: url('Assets/water.png');
+        }
+        .grass {
+            background-image: url('Assets/grass.png');
+        }
+        .dirt {
+            background-image: url('Assets/dirt.png');
+        }
+        .flowers {
+            background-image: url('Assets/flowers.png');
+        }
+        .rocks {
+            background-image: url('Assets/rocks.png');
+        }
+
+        /* Isometric Positions */
+        .tile.water {
+            left: 0; top: 64px;
+        }
+        .tile.grass {
+            left: 64px; top: 32px;
+        }
+        .tile.dirt {
+            left: 64px; top: 96px;
+        }
+        .tile.flowers {
+            left: 96px; top: 64px;
+        }
+        .tile.rocks {
+            left: 128px; top: 32px;
         }
     </style>
 </head>
 <body>
-<script>
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    document.body.appendChild(canvas);
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const TILE_SIZE = 64; // Rendered tile size
-    const mapWidth = 7;
-    const mapHeight = 7;
-
-    const textures = {
-        water: new Image(),
-        grass: new Image(),
-        dirt: new Image(),
-        flowers: new Image(),
-        rocks: new Image()
-    };
-
-    // Load tile textures from GitHub
-    textures.water.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/water_tile.png';
-    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/grass_tile.png';
-    textures.dirt.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/dirt_tile.png';
-    textures.flowers.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/flowers_tile.png';
-    textures.rocks.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/rocks_tile.png';
-
-    // Map layout
-    const map = [
-        ['water', 'water', 'water', 'water', 'water', 'water', 'water'],
-        ['water', 'dirt',  'grass', 'grass', 'grass', 'dirt',  'water'],
-        ['water', 'dirt',  'grass', 'flowers', 'grass', 'dirt',  'water'],
-        ['water', 'dirt',  'grass', 'grass', 'rocks',  'dirt',  'water'],
-        ['water', 'dirt',  'grass', 'grass', 'grass', 'dirt',  'water'],
-        ['water', 'dirt',  'dirt',  'dirt',  'dirt',  'dirt',  'water'],
-        ['water', 'water', 'water', 'water', 'water', 'water', 'water']
-    ];
-
-    function drawTile(x, y, texture) {
-        const isoX = (x - y) * TILE_SIZE / 2 + canvas.width / 2;
-        const isoY = (x + y) * TILE_SIZE / 4 + canvas.height / 4;
-
-        ctx.drawImage(
-            texture,
-            0, 0, texture.width, texture.height, // Use entire image
-            isoX, isoY, // Placement on canvas
-            TILE_SIZE, TILE_SIZE // Scaled size (64x64)
-        );
-    }
-
-    function drawMap() {
-        for (let y = 0; y < mapHeight; y++) {
-            for (let x = 0; x < mapWidth; x++) {
-                const tileType = map[y][x];
-                const texture = textures[tileType];
-                drawTile(x, y, texture);
-            }
-        }
-    }
-
-    function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawMap();
-        requestAnimationFrame(gameLoop);
-    }
-
-    // Wait for all textures to load before starting the game loop
-    const promises = Object.values(textures).map(texture => new Promise(resolve => {
-        texture.onload = resolve;
-    }));
-
-    Promise.all(promises).then(() => {
-        gameLoop();
-    });
-</script>
+    <div class="grid">
+        <div class="tile water"></div>
+        <div class="tile water" style="left: 64px; top: 96px;"></div>
+        <div class="tile water" style="left: 128px; top: 128px;"></div>
+        <div class="tile grass"></div>
+        <div class="tile dirt"></div>
+        <div class="tile flowers"></div>
+        <div class="tile rocks"></div>
+    </div>
 </body>
 </html>
