@@ -3,237 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garden of Eden Game</title>
+    <title>Garden of Eeden Isometric Game</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             font-family: Arial, sans-serif;
         }
-
         canvas {
             display: block;
+            background: #87ceeb;
         }
-
-        #dialogue-box {
-            position: absolute;
-            bottom: 10%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-            width: 80%;
-        }
-
-        #dialogue-box img {
-            max-width: 50px;
-            vertical-align: middle;
-        }
-
-        #dialogue-box p {
-            display: inline;
-            margin-left: 10px;
-        }
-
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="dialogue-box">
-        <img id="npc-portrait" src="" alt="NPC Portrait">
-        <p id="npc-dialogue"></p>
-    </div>
+<script>
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-        console.log("Game canvas initialized...");
+    const TILE_SIZE = 64; // Size of each isometric tile
+    const mapWidth = 10;
+    const mapHeight = 10;
 
-        // Game Variables
-        const TILE_SIZE = 64; // In-game tile size (scaling up from the asset tile size)
-        const PLAYER_SPEED = 4;
-        const ASSETS_URL = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/';
+    const player = {
+        x: 5,
+        y: 5,
+        speed: 0.1,
+        frame: 0,
+        state: 'idle', // Can be 'idle' or 'moving'
+        texture: new Image()
+    };
 
-        const tileset = new Image();
-        tileset.src = `${ASSETS_URL}Isometric_MedievalFantasy_Tiles.png`;
+    const npcs = [
+        { x: 3, y: 3, state: 'idle', frame: 0, texture: new Image(), message: "Welcome to the Garden of Eeden!" },
+        { x: 7, y: 2, state: 'idle', frame: 0, texture: new Image(), message: "This is a place of wonder and wisdom." },
+        { x: 6, y: 6, state: 'idle', frame: 0, texture: new Image(), message: "Seek knowledge, and you shall find it." }
+    ];
 
-        const entities = new Image();
-        entities.src = `${ASSETS_URL}IsometricTRPGAssetPack_Entities.png`;
+    const map = [];
 
-        // Player (Warrior-like Character)
-        const player = {
-            x: 100,
-            y: 100,
-            sprite: entities,
-            frame: 0,
-            frameMax: 3,
-            animationDelay: 10,
-            animationCounter: 0,
-            isWalking: false,
-            direction: 'down' // Tracks player direction ('down', 'up')
-        };
+    const textures = {
+        grass: new Image()
+    };
 
-        // NPCs (Random Entities)
-        const npcs = [
-            { x: 300, y: 200, spriteX: 24, spriteY: 8, dialogue: "Hello, traveler! Welcome to the Garden of Eden." },
-            { x: 400, y: 300, spriteX: 8, spriteY: 16, dialogue: "It's a lovely day for exploring, isn't it?" },
-            { x: 500, y: 400, spriteX: 32, spriteY: 24, dialogue: "Be careful out there!" }
-        ];
+    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Isometric_MedievalFantasy_Tiles.png'; // Grass tileset from GitHub
+    player.texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/player_idle.png'; // Replace with player idle texture
 
-        // Grass Tile (2nd Column, 1st Row)
-        const grassTile = { spriteX: 16, spriteY: 0 };
+    npcs[0].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc1_idle.png';
+    npcs[1].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc2_idle.png';
+    npcs[2].texture.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/npc3_idle.png';
 
-        // Dialogue System
-        const dialogueBox = document.getElementById('dialogue-box');
-        const npcPortrait = document.getElementById('npc-portrait');
-        const npcDialogue = document.getElementById('npc-dialogue');
-        let currentDialogueIndex = null;
-
-        function showDialogue(index) {
-            const npc = npcs[index];
-            npcDialogue.textContent = npc.dialogue;
-            dialogueBox.style.display = 'block';
+    for (let y = 0; y < mapHeight; y++) {
+        for (let x = 0; x < mapWidth; x++) {
+            map.push({ x, y });
         }
+    }
 
-        function hideDialogue() {
-            dialogueBox.style.display = 'none';
-            currentDialogueIndex = null;
-        }
+    function drawTile(x, y, texture, cropX = 16, cropY = 0, cropWidth = 16, cropHeight = 16) {
+        // Grass tile is at (16, 0) in the spritesheet
+        const isoX = (x - y) * TILE_SIZE / 2 + canvas.width / 2;
+        const isoY = (x + y) * TILE_SIZE / 4 + canvas.height / 4;
+        ctx.drawImage(texture, cropX, cropY, cropWidth, cropHeight, isoX, isoY, TILE_SIZE, TILE_SIZE);
+    }
 
-        // Controls
-        const keys = {};
-        window.addEventListener('keydown', (e) => {
-            keys[e.key] = true;
-            if (e.key === 'Enter' && currentDialogueIndex !== null) {
-                hideDialogue();
+    function drawMap() {
+        map.forEach(tile => {
+            drawTile(tile.x, tile.y, textures.grass, 16, 0, 16, 16);
+        });
+    }
+
+    function drawEntity(entity) {
+        const isoX = (entity.x - entity.y) * TILE_SIZE / 2 + canvas.width / 2;
+        const isoY = (entity.x + entity.y) * TILE_SIZE / 4 + canvas.height / 4;
+        const frameX = Math.floor(entity.frame) * TILE_SIZE;
+        ctx.drawImage(entity.texture, frameX, 0, TILE_SIZE, TILE_SIZE, isoX, isoY - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+    }
+
+    function drawPlayer() {
+        drawEntity(player);
+    }
+
+    function drawNPCs() {
+        npcs.forEach(drawEntity);
+    }
+
+    function checkCollision(entity) {
+        return Math.floor(player.x) === entity.x && Math.floor(player.y) === entity.y;
+    }
+
+    function interactWithNPCs() {
+        npcs.forEach(npc => {
+            if (checkCollision(npc)) {
+                alert(npc.message);
             }
         });
+    }
 
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
+    function updateFrames() {
+        player.frame += 0.1;
+        if (player.frame >= 4) player.frame = 0; // Assuming 4 frames per animation
+
+        npcs.forEach(npc => {
+            npc.frame += 0.05;
+            if (npc.frame >= 4) npc.frame = 0; // Assuming 4 frames per NPC animation
         });
+    }
 
-        function movePlayer() {
-            player.isWalking = false;
-            if (keys['ArrowUp']) {
-                player.y -= PLAYER_SPEED;
-                player.isWalking = true;
-                player.direction = 'up';
-            }
-            if (keys['ArrowDown']) {
-                player.y += PLAYER_SPEED;
-                player.isWalking = true;
-                player.direction = 'down';
-            }
-            if (keys['ArrowLeft']) {
-                player.x -= PLAYER_SPEED;
-                player.isWalking = true;
-            }
-            if (keys['ArrowRight']) {
-                player.x += PLAYER_SPEED;
-                player.isWalking = true;
-            }
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawMap();
+        drawNPCs();
+        drawPlayer();
+        updateFrames();
+        requestAnimationFrame(gameLoop);
+    }
+
+    window.addEventListener('keydown', (e) => {
+        player.state = 'moving';
+        switch (e.key) {
+            case 'ArrowUp':
+            case 'w':
+                player.y -= player.speed;
+                break;
+            case 'ArrowDown':
+            case 's':
+                player.y += player.speed;
+                break;
+            case 'ArrowLeft':
+            case 'a':
+                player.x -= player.speed;
+                break;
+            case 'ArrowRight':
+            case 'd':
+                player.x += player.speed;
+                break;
         }
+        interactWithNPCs();
+    });
 
-        function checkInteraction() {
-            npcs.forEach((npc, index) => {
-                const dx = player.x - npc.x;
-                const dy = player.y - npc.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < TILE_SIZE) {
-                    currentDialogueIndex = index;
-                    showDialogue(index);
-                }
-            });
-        }
+    window.addEventListener('keyup', () => {
+        player.state = 'idle';
+    });
 
-        function animateSprite(entity) {
-            entity.animationCounter++;
-            if (entity.animationCounter >= entity.animationDelay) {
-                entity.frame = (entity.frame + 1) % entity.frameMax;
-                entity.animationCounter = 0;
-            }
-        }
-
-        function drawTileIso(x, y, spriteX, spriteY) {
-            const isoX = (x - y) * TILE_SIZE / 2 + canvas.width / 2;
-            const isoY = (x + y) * TILE_SIZE / 4;
-            ctx.drawImage(
-                tileset,
-                spriteX, spriteY,
-                16, 16, // Source size (16x16 from tileset)
-                isoX, isoY,
-                TILE_SIZE, TILE_SIZE // Drawn size (scaled to 64x64)
-            );
-        }
-
-        function drawSprite(entity) {
-            const spriteY = entity.direction === 'down' ? 0 : 16; // First row for front, second row for back
-            ctx.drawImage(
-                entity.sprite,
-                entity.frame * 16, // Frame animation
-                spriteY, // Row selection based on direction
-                16,
-                16,
-                entity.x,
-                entity.y,
-                TILE_SIZE,
-                TILE_SIZE
-            );
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Grass Tiles in Isometric Arrangement
-            const mapWidth = Math.ceil(canvas.width / TILE_SIZE);
-            const mapHeight = Math.ceil(canvas.height / TILE_SIZE);
-            for (let x = 0; x < mapWidth; x++) {
-                for (let y = 0; y < mapHeight; y++) {
-                    drawTileIso(x, y, grassTile.spriteX, grassTile.spriteY);
-                }
-            }
-
-            // Move Player
-            movePlayer();
-
-            // Draw NPCs
-            npcs.forEach((npc) => {
-                ctx.drawImage(
-                    entities,
-                    npc.spriteX,
-                    npc.spriteY,
-                    16, 16, // Correct sprite size
-                    npc.x,
-                    npc.y,
-                    TILE_SIZE,
-                    TILE_SIZE // Scale up
-                );
-            });
-
-            // Draw Player
-            animateSprite(player);
-            drawSprite(player);
-
-            // Check Interaction
-            if (currentDialogueIndex === null && keys[' ']) {
-                checkInteraction();
-            }
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        tileset.onload = () => {
-            entities.onload = () => {
-                gameLoop();
-            };
-        };
-    </script>
+    textures.grass.onload = () => {
+        gameLoop();
+    };
+</script>
 </body>
 </html>
