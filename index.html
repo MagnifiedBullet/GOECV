@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Isometric Garden Scene</title>
     <style>
-        body {
+        body {https://scrabling.itch.io/pixel-isometric-tiles
             margin: 0;
             overflow: hidden;
             font-family: Arial, sans-serif;
@@ -26,7 +26,6 @@
     canvas.height = window.innerHeight;
 
     const TILE_SIZE = 64; // Rendered tile size
-    const TILE_SRC_SIZE = 32; // Original tile size in the sprite sheet
     const mapWidth = 7;
     const mapHeight = 7;
 
@@ -39,11 +38,11 @@
     };
 
     // Load tile textures from GitHub
-    textures.water.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/water.png';
-    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/grass.png';
-    textures.dirt.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/dirt.png';
-    textures.flowers.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/flowers.png';
-    textures.rocks.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/rocks.png';
+    textures.water.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/water_tile.png';
+    textures.grass.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/grass_tile.png';
+    textures.dirt.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/dirt_tile.png';
+    textures.flowers.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/flowers_tile.png';
+    textures.rocks.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/separated%20images/rocks_tile.png';
 
     // Map layout
     const map = [
@@ -62,7 +61,7 @@
 
         ctx.drawImage(
             texture,
-            0, 0, TILE_SRC_SIZE, TILE_SRC_SIZE, // Crop entire 32x32 tile
+            0, 0, texture.width, texture.height, // Use entire image
             isoX, isoY, // Placement on canvas
             TILE_SIZE, TILE_SIZE // Scaled size (64x64)
         );
