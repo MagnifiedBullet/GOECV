@@ -13,7 +13,7 @@
         canvas {
             display: block;
             margin: auto;
-            background: url('https://github.com/MagnifiedBullet/GOECV/blob/main/Assets/Background.PNG') no-repeat center center;
+            background: url('https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG') no-repeat center center;
             background-size: cover;
         }
     </style>
@@ -25,13 +25,16 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        // Player sprite image
+        const playerImage = new Image();
+        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/player.png';
+
         // Player properties
         const player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
+            x: canvas.width / 2 - 16,
+            y: canvas.height / 2 - 16,
             width: 32,
             height: 32,
-            color: 'red',
             speed: 5
         };
 
@@ -56,8 +59,6 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background (already set in CSS as canvas background)
-
             // Update player position
             if (keys.ArrowUp) player.y -= player.speed;
             if (keys.ArrowDown) player.y += player.speed;
@@ -69,14 +70,15 @@
             player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
             // Draw player
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
 
             requestAnimationFrame(gameLoop);
         }
 
         // Start the game loop
-        gameLoop();
+        playerImage.onload = () => {
+            gameLoop();
+        };
     </script>
 </body>
 </html>
