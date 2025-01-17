@@ -15,8 +15,8 @@
         }
         .grid {
             position: relative;
-            width: 256px; /* Adjust based on tile size */
-            height: 256px; /* Adjust based on tile size */
+            width: 256px;
+            height: 256px;
         }
         .tile {
             position: absolute;
@@ -117,31 +117,68 @@
 
         /* Isometric Positions */
         .tile.water {
-            left: 0; top: 64px;
+            left: 0; top: 96px;
         }
-        .tile.grass {
-            left: 64px; top: 32px;
+        .tile.water:nth-child(2) {
+            left: 64px; top: 128px;
+        }
+        .tile.water:nth-child(3) {
+            left: 128px; top: 160px;
+        }
+        .tile.water:nth-child(4) {
+            left: 0; top: 128px;
+        }
+        .tile.water:nth-child(5) {
+            left: 64px; top: 160px;
+        }
+        .tile.water:nth-child(6) {
+            left: 128px; top: 192px;
+        }
+        .tile.lgrass_024 {
+            left: 64px; top: 64px;
         }
         .tile.dirt {
             left: 64px; top: 96px;
         }
-        .tile.flowers {
+        .tile.flowers_041 {
             left: 96px; top: 64px;
         }
-        .tile.rocks {
+        .tile.rock_64 {
             left: 128px; top: 32px;
+        }
+        .tile.dgrass_040 {
+            left: 32px; top: 64px;
+        }
+        .tile.rocktile_61 {
+            left: 96px; top: 32px;
         }
     </style>
 </head>
 <body>
     <div class="grid">
+        <!-- Water tiles -->
         <div class="tile water"></div>
-        <div class="tile water" style="left: 64px; top: 96px;"></div>
-        <div class="tile water" style="left: 128px; top: 128px;"></div>
-        <div class="tile grass"></div>
+        <div class="tile water"></div>
+        <div class="tile water"></div>
+        <div class="tile water"></div>
+        <div class="tile water"></div>
+        <div class="tile water"></div>
+
+        <!-- Grass tile -->
+        <div class="tile lgrass_024"></div>
+
+        <!-- Dirt tile -->
         <div class="tile dirt"></div>
-        <div class="tile flowers"></div>
-        <div class="tile rocks"></div>
+
+        <!-- Flowers tile -->
+        <div class="tile flowers_041"></div>
+
+        <!-- Rocks tile -->
+        <div class="tile rock_64"></div>
+
+        <!-- Additional elements -->
+        <div class="tile dgrass_040"></div>
+        <div class="tile rocktile_61"></div>
     </div>
 </body>
 </html>
