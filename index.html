@@ -1,1 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isometric Joystick Game</title>
+    <style>
+        body {
+            background-color: #1e1e2c;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+            background: url('https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG') no-repeat center center;
+            background-size: cover;
+        }
+        h1 {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>The Garden of Eeden</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Load images for player, joystick, and buttons
+        const playerImage = new Image();
+        const joystickImage = new Image();
+        const buttonsImage = new Image();
+        
+        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
+        joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
+        buttonsImage.src = 'https://github.com/MagnifiedBullet/GOECV/blob/main/Assets/Xbuttonsplus.png';
+
+        // Variables for game state
+        let assetsLoaded = 0;
+        const totalAssets = 3;  // Total number of assets to load
+
+        // Variables for player, joystick, and buttons
+        const player = { x: 400, y: 300, width: 32, height: 32, speed: 2, frameX: 0, frameY: 0 };
+        const joystick = { x: 100, y: canvas.height - 150, radius: 50 };
+        const buttons = {
+            xButton: { x: canvas.width - 120, y: canvas.height - 120, width: 100, height: 100, currentFrame: 0, isPressed: false },
+            squareButton: { x: canvas.width - 120, y: canvas.height - 240, width: 100, height: 100, currentFrame: 0, isPressed: false }
+        };
+
+        // Function to check if all assets are loaded
+        function checkAssetsLoaded() {
+            assetsLoaded++;
+            if (assetsLoaded === totalAssets) {
+                gameLoop();  // Start the game loop once all assets are loaded
+            }
+        }
+
+        // Event listeners for asset loading
+        playerImage.onload = checkAssetsLoaded;
+        joystickImage.onload = checkAssetsLoaded;
+        buttonsImage.onload = checkAssetsLoaded;
+
+        // Function to draw the player on the canvas
+        function drawPlayer() {
+            ctx.drawImage(
+                playerImage,
+                player.frameX * player.width, player.frameY * player.height,
+                player.width, player.height,
+                player.x, player.y,
+                player.width, player.height
+            );
+        }
+
+        // Function to draw the joystick
+        function drawJoystick() {
+            ctx.drawImage(
+                joystickImage,
+                0, 0, 128, 128,
+                joystick.x - joystick.radius, joystick.y - joystick.radius,
+                joystick.radius * 2, joystick.radius * 2
+            );
+        }
+
+        // Function to draw the buttons
+        function drawButtons() {
+            // Draw X button
+            ctx.drawImage(
+                buttonsImage,
+                buttons.xButton.currentFrame * buttons.xButton.width, 0,
+                buttons.xButton.width, buttons.xButton.height,
+                buttons.xButton.x, buttons.xButton.y,
+                buttons.xButton.width, buttons.xButton.height
+            );
+
+            // Draw Square button
+            ctx.drawImage(
+                buttonsImage,
+                buttons.squareButton.currentFrame * buttons.squareButton.width, 0,
+                buttons.squareButton.width, buttons.squareButton.height,
+                buttons.squareButton.x, buttons.squareButton.y,
+                buttons.squareButton.width, buttons.squareButton.height
+            );
+        }
+
+        // Function to animate the button frames
+        function animateButton(button) {
+            if (button.isPressed) {
+                if (button.currentFrame < 2) button.currentFrame++; // Move forward through frames
+            } else {
+                if (button.currentFrame > 0) button.currentFrame--; // Move backward through frames
+            }
+        }
+
+        // Handle button interactions
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Check for X button click
+            if (
+                mouseX >= buttons.xButton.x &&
+                mouseX <= buttons.xButton.x + buttons.xButton.width &&
+                mouseY >= buttons.xButton.y &&
+                mouseY <= buttons.xButton.y + buttons.xButton.height
+            ) {
+                buttons.xButton.isPressed = true;
+            }
+
+            // Check for Square button click
+            if (
+                mouseX >= buttons.squareButton.x &&
+                mouseX <= buttons.squareButton.x + buttons.squareButton.width &&
+                mouseY >= buttons.squareButton.y &&
+                mouseY <= buttons.squareButton.y + buttons.squareButton.height
+            ) {
+                buttons.squareButton.isPressed = true;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            buttons.xButton.isPressed = false;
+            buttons.squareButton.isPressed = false;
+        });
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
+
+            drawPlayer();  // Draw the player
+            drawJoystick();  // Draw the joystick
+            drawButtons();  // Draw the buttons
+
+            animateButton(buttons.xButton);  // Animate X button
+            animateButton(buttons.squareButton);  // Animate Square button
+
+            requestAnimationFrame(gameLoop);  // Repeat the game loop
+        }
+    </script>
+</body>
+</html>
