@@ -9,6 +9,7 @@
             background-color: #1e1e2c;
             margin: 0;
             overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif; /* Whimsical font */
         }
         canvas {
             display: block;
@@ -16,9 +17,19 @@
             background: url('https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG') no-repeat center center;
             background-size: cover;
         }
+        h1 {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3em;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
 <body>
+    <h1>The Garden of Eeden</h1> <!-- Game title -->
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
@@ -34,23 +45,24 @@
             x: canvas.width / 2 - 16,
             y: canvas.height / 2 - 16,
             width: 32,
-            height: 16, // Reduced height to make the player less than half a block tall
+            height: 32, // Keeping the player sprite size as is
             speed: 5,
             direction: 'down', // Default direction
             frameX: 0,
-            frameY: 0
+            frameY: 0,
+            walkingCycle: 0 // To control the walking animation cycle
         };
 
         // Directions to frame mapping
         const directions = {
-            up: 3,
-            down: 0,
-            left: 1,
+            up: 0,
+            ne: 1,
             right: 2,
-            nw: 4, // NorthWest
-            ne: 5, // NorthEast
-            sw: 6, // SouthWest
-            se: 7  // SouthEast
+            se: 3,
+            down: 4,
+            sw: 5,
+            left: 6,
+            nw: 7
         };
 
         // Key press tracking
@@ -117,18 +129,24 @@
             // Update player sprite frame
             player.frameY = directions[player.direction];
 
-            // Draw player
+            // Control walking animation cycle (toggle between 2 frames)
+            player.frameX = (player.walkingCycle % 2) * player.width;
+
+            // Draw player sprite
             ctx.drawImage(
                 playerImage,
-                player.frameX * player.width, // Source X
+                player.frameX, // Source X
                 player.frameY * player.height, // Source Y
                 player.width, // Source Width
-                32, // Source Height remains consistent for sprite sheet
+                player.height, // Source Height
                 player.x, // Destination X
                 player.y, // Destination Y
                 player.width, // Destination Width
                 player.height // Destination Height
             );
+
+            // Cycle walking frames for animation
+            player.walkingCycle = (player.walkingCycle + 1) % 4;
 
             requestAnimationFrame(gameLoop);
         }
