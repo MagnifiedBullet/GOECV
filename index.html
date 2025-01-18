@@ -54,17 +54,26 @@
             animationCounter: 0
         };
 
-        // Collision areas (rectangles corresponding to impassable areas in Background.PNG)
+        // Collision zones (rectangles corresponding to impassable areas in Background.PNG)
         const collisionZones = [
-            { x: 200, y: 400, width: 100, height: 50 }, // Example collision zone
-            { x: 500, y: 300, width: 120, height: 80 }, // Another collision zone
-            // Add more zones as needed to match Background.PNG
+            // Example collision areas (in isometric space)
+            { x: 300, y: 250, width: 100, height: 50 }, // Water tile
+            { x: 500, y: 300, width: 120, height: 80 }, // Rock tile
+            { x: 200, y: 500, width: 150, height: 100 }, // Grass tile
+            // More zones can be added
         ];
 
         // Ensure the player image is loaded before starting the game
         playerImage.onload = () => {
             gameLoop();
         };
+
+        // Function to convert isometric coordinates to screen coordinates
+        function isoToScreen(x, y) {
+            const screenX = (x - y) * (tileWidth / 2);
+            const screenY = (x + y) * (tileHeight / 2);
+            return { x: screenX, y: screenY };
+        }
 
         // Check for collision between the player and a collision zone
         function checkCollision(player, zone) {
@@ -76,7 +85,7 @@
             );
         }
 
-        // Prevent the player from moving into a collision zone
+        // Handle player movement and collision
         function handleCollisions() {
             for (const zone of collisionZones) {
                 if (checkCollision(player, zone)) {
@@ -93,15 +102,32 @@
         function drawCollisionZones() {
             ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red
             for (const zone of collisionZones) {
-                ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+                const { x, y } = isoToScreen(zone.x, zone.y); // Convert to screen coordinates
+                ctx.fillRect(x, y, zone.width, zone.height);
             }
+        }
+
+        // Draw the player character
+        function drawPlayer() {
+            const row = player.walkingCycle === 0 ? 1 : 3;
+            ctx.drawImage(
+                playerImage,
+                player.frameX * player.width,
+                row * 32 - 12, // Adjusted for 12px shift
+                player.width,
+                player.height,
+                player.x,
+                player.y,
+                player.width,
+                player.height
+            );
         }
 
         // Game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Movement logic
+            // Handle movement
             const keys = {
                 ArrowUp: () => {
                     player.y -= player.speed;
@@ -129,19 +155,8 @@
             // Handle collisions
             handleCollisions();
 
-            // Draw player
-            const row = player.walkingCycle === 0 ? 1 : 3;
-            ctx.drawImage(
-                playerImage,
-                player.frameX * player.width,
-                row * 32 - 12, // Adjusted for 12px shift
-                player.width,
-                player.height,
-                player.x,
-                player.y,
-                player.width,
-                player.height
-            );
+            // Draw the player character
+            drawPlayer();
 
             // Draw collision zones (for debugging, optional)
             drawCollisionZones();
