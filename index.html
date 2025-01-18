@@ -91,7 +91,7 @@
             x: canvas.width / 2 - 16,
             y: canvas.height / 2 - 16,
             width: 32,
-            height: 32, // Keeping the player sprite size as is
+            height: 32, // Consistent frame size
             speed: 5,
             direction: 'down', // Default direction
             frameX: 0,
@@ -99,16 +99,16 @@
             walkingCycle: 0 // To control the walking animation cycle
         };
 
-        // Directions to frame mapping
+        // Directions to frame mapping (row/column positions in the sprite sheet)
         const directions = {
-            up: 0,
-            ne: 1,
-            right: 2,
-            se: 3,
-            down: 4,
-            sw: 5,
-            left: 6,
-            nw: 7
+            up: { row: 0, col: 0 },
+            ne: { row: 0, col: 1 },
+            right: { row: 0, col: 2 },
+            se: { row: 0, col: 3 },
+            down: { row: 1, col: 4 },
+            sw: { row: 1, col: 5 },
+            left: { row: 1, col: 6 },
+            nw: { row: 1, col: 7 }
         };
 
         // Key press tracking
@@ -186,16 +186,17 @@
             player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
             // Update player sprite frame based on direction
-            player.frameY = directions[player.direction];
+            const direction = directions[player.direction];
 
             // Control walking animation cycle (toggle between 2 frames)
             player.frameX = (player.walkingCycle % 2) * player.width;
+            player.frameY = direction.row;
 
             // Draw player sprite
             ctx.drawImage(
                 playerImage,
                 player.frameX, // Source X
-                player.frameY * player.height, // Source Y
+                direction.col * player.height, // Source Y (using column index for direction)
                 player.width, // Source Width
                 player.height, // Source Height
                 player.x, // Destination X
