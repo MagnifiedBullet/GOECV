@@ -44,6 +44,10 @@
         const joystickImage = new Image();
         joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
 
+        // Jump button sprite sheet (updated with the correct sprite sheet)
+        const jumpButtonImage = new Image();
+        jumpButtonImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/X-button.png';
+
         // Player properties
         const player = {
             x: 400,
@@ -55,7 +59,9 @@
             frameX: 0,
             frameY: 0,
             walkingCycle: 0,
-            animationCounter: 0
+            animationCounter: 0,
+            velocityY: 0, // Y velocity for jumping
+            isJumping: false
         };
 
         // Joystick properties
@@ -68,6 +74,15 @@
             isMoving: false,
             stickX: 0,
             stickY: 0,
+        };
+
+        // Jump button properties
+        const jumpButton = {
+            x: canvas.width - 120,
+            y: canvas.height - 120,
+            width: 100,
+            height: 100,
+            isPressed: false
         };
 
         // Keyboard input flags
@@ -83,13 +98,14 @@
 
         function checkAssetsLoaded() {
             assetsLoaded++;
-            if (assetsLoaded === 2) {
-                gameLoop(); // Start the game loop once both assets are loaded
+            if (assetsLoaded === 3) {
+                gameLoop(); // Start the game loop once all assets are loaded
             }
         }
 
         joystickImage.onload = checkAssetsLoaded;
         playerImage.onload = checkAssetsLoaded;
+        jumpButtonImage.onload = checkAssetsLoaded;
 
         // Draw the joystick and stick
         function drawJoystick() {
@@ -142,6 +158,42 @@
             if (keys.d) player.x += player.speed;
         }
 
+        // Update jump
+        function handleJump() {
+            if (player.isJumping) {
+                player.velocityY += 0.5; // Gravity
+                player.y += player.velocityY;
+
+                if (player.y >= 300) {
+                    player.y = 300;
+                    player.isJumping = false;
+                    player.velocityY = 0;
+                }
+            }
+        }
+
+        // Draw the jump button
+        function drawJumpButton() {
+            ctx.drawImage(jumpButtonImage, jumpButton.x, jumpButton.y, jumpButton.width, jumpButton.height);
+        }
+
+        // Handle jump button click
+        function handleJumpButton(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            if (
+                mouseX >= jumpButton.x &&
+                mouseX <= jumpButton.x + jumpButton.width &&
+                mouseY >= jumpButton.y &&
+                mouseY <= jumpButton.y + jumpButton.height
+            ) {
+                player.isJumping = true;
+                player.velocityY = -8; // Initial jump speed
+            }
+        }
+
         // Draw the player character
         function drawPlayer() {
             const row = player.walkingCycle === 0 ? 1 : 3;
@@ -165,12 +217,18 @@
             // Draw the joystick
             drawJoystick();
 
+            // Draw the jump button
+            drawJumpButton();
+
             // Update player movement based on joystick or keyboard input
             if (joystick.isMoving) {
                 updatePlayerMovement();
             } else {
                 updatePlayerMovementKeyboard();
             }
+
+            // Handle jumping
+            handleJump();
 
             // Draw the player character
             drawPlayer();
@@ -189,6 +247,9 @@
         canvas.addEventListener('mousedown', handleJoystickMovement);
         canvas.addEventListener('mousemove', handleJoystickMovement);
         canvas.addEventListener('mouseup', handleJoystickMovement);
+
+        // Add mouse event for jump button
+        canvas.addEventListener('mousedown', handleJumpButton);
 
         // Add keyboard event listeners for WASD movement
         document.addEventListener('keydown', (e) => {
