@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isometric Collision Detection</title>
+    <title>Isometric Joystick Game</title>
     <style>
         body {
             background-color: #1e1e2c;
@@ -40,6 +40,10 @@
         const playerImage = new Image();
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
 
+        // Joystick sprite sheet
+        const joystickImage = new Image();
+        joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
+
         // Player properties
         const player = {
             x: 400,
@@ -54,57 +58,88 @@
             animationCounter: 0
         };
 
-        // Collision zones (rectangles corresponding to impassable areas in Background.PNG)
-        const collisionZones = [
-            // Example collision areas (in isometric space)
-            { x: 300, y: 250, width: 100, height: 50 }, // Water tile
-            { x: 500, y: 300, width: 120, height: 80 }, // Rock tile
-            { x: 200, y: 500, width: 150, height: 100 }, // Grass tile
-            // More zones can be added
-        ];
-
-        // Ensure the player image is loaded before starting the game
-        playerImage.onload = () => {
-            gameLoop();
+        // Joystick properties
+        const joystick = {
+            x: 100, // Initial position of the joystick
+            y: canvas.height - 150,
+            radius: 50,
+            stickRadius: 20,
+            maxDistance: 50, // Maximum distance the stick can move
+            isMoving: false,
+            stickX: 0,
+            stickY: 0,
         };
 
-        // Function to convert isometric coordinates to screen coordinates
-        function isoToScreen(x, y) {
-            const screenX = (x - y) * (tileWidth / 2);
-            const screenY = (x + y) * (tileHeight / 2);
-            return { x: screenX, y: screenY };
-        }
+        // Keyboard input flags
+        const keys = {
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
 
-        // Check for collision between the player and a collision zone
-        function checkCollision(player, zone) {
-            return (
-                player.x < zone.x + zone.width &&
-                player.x + player.width > zone.x &&
-                player.y < zone.y + zone.height &&
-                player.y + player.height > zone.y
-            );
-        }
+        // Ensure all assets are loaded before starting the game
+        let assetsLoaded = 0;
 
-        // Handle player movement and collision
-        function handleCollisions() {
-            for (const zone of collisionZones) {
-                if (checkCollision(player, zone)) {
-                    // Prevent movement based on collision direction
-                    if (player.direction === 'left') player.x = zone.x + zone.width;
-                    if (player.direction === 'right') player.x = zone.x - player.width;
-                    if (player.direction === 'up') player.y = zone.y + zone.height;
-                    if (player.direction === 'down') player.y = zone.y - player.height;
-                }
+        function checkAssetsLoaded() {
+            assetsLoaded++;
+            if (assetsLoaded === 2) {
+                gameLoop(); // Start the game loop once both assets are loaded
             }
         }
 
-        // Draw collision zones for debugging
-        function drawCollisionZones() {
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red
-            for (const zone of collisionZones) {
-                const { x, y } = isoToScreen(zone.x, zone.y); // Convert to screen coordinates
-                ctx.fillRect(x, y, zone.width, zone.height);
+        joystickImage.onload = checkAssetsLoaded;
+        playerImage.onload = checkAssetsLoaded;
+
+        // Draw the joystick and stick
+        function drawJoystick() {
+            // Draw the joystick base
+            ctx.drawImage(joystickImage, 0, 0, 128, 128, joystick.x - joystick.radius, joystick.y - joystick.radius, joystick.radius * 2, joystick.radius * 2);
+
+            // Draw the joystick stick
+            ctx.beginPath();
+            ctx.arc(joystick.x + joystick.stickX, joystick.y + joystick.stickY, joystick.stickRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fill();
+        }
+
+        // Handle joystick movement
+        function handleJoystickMovement(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const dx = mouseX - joystick.x;
+            const dy = mouseY - joystick.y;
+            const distance = Math.min(Math.sqrt(dx * dx + dy * dy), joystick.maxDistance);
+
+            joystick.stickX = (dx / Math.sqrt(dx * dx + dy * dy)) * distance;
+            joystick.stickY = (dy / Math.sqrt(dx * dx + dy * dy)) * distance;
+
+            if (e.type === 'mousedown') {
+                joystick.isMoving = true;
+            } else if (e.type === 'mouseup') {
+                joystick.isMoving = false;
+                joystick.stickX = 0;
+                joystick.stickY = 0;
             }
+        }
+
+        // Update player movement based on joystick direction
+        function updatePlayerMovement() {
+            const moveX = joystick.stickX / joystick.maxDistance;
+            const moveY = joystick.stickY / joystick.maxDistance;
+
+            player.x += moveX * player.speed;
+            player.y += moveY * player.speed;
+        }
+
+        // Update player movement based on WASD keyboard input
+        function updatePlayerMovementKeyboard() {
+            if (keys.w) player.y -= player.speed;
+            if (keys.s) player.y += player.speed;
+            if (keys.a) player.x -= player.speed;
+            if (keys.d) player.x += player.speed;
         }
 
         // Draw the player character
@@ -127,39 +162,18 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Handle movement
-            const keys = {
-                ArrowUp: () => {
-                    player.y -= player.speed;
-                    player.direction = 'up';
-                },
-                ArrowDown: () => {
-                    player.y += player.speed;
-                    player.direction = 'down';
-                },
-                ArrowLeft: () => {
-                    player.x -= player.speed;
-                    player.direction = 'left';
-                },
-                ArrowRight: () => {
-                    player.x += player.speed;
-                    player.direction = 'right';
-                }
-            };
+            // Draw the joystick
+            drawJoystick();
 
-            // Listen for arrow key input
-            document.addEventListener('keydown', (e) => {
-                if (keys[e.key]) keys[e.key]();
-            });
-
-            // Handle collisions
-            handleCollisions();
+            // Update player movement based on joystick or keyboard input
+            if (joystick.isMoving) {
+                updatePlayerMovement();
+            } else {
+                updatePlayerMovementKeyboard();
+            }
 
             // Draw the player character
             drawPlayer();
-
-            // Draw collision zones (for debugging, optional)
-            drawCollisionZones();
 
             // Update animation
             player.animationCounter++;
@@ -170,6 +184,26 @@
 
             requestAnimationFrame(gameLoop);
         }
+
+        // Add mouse events for joystick
+        canvas.addEventListener('mousedown', handleJoystickMovement);
+        canvas.addEventListener('mousemove', handleJoystickMovement);
+        canvas.addEventListener('mouseup', handleJoystickMovement);
+
+        // Add keyboard event listeners for WASD movement
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'w') keys.w = true;
+            if (e.key === 'a') keys.a = true;
+            if (e.key === 's') keys.s = true;
+            if (e.key === 'd') keys.d = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'w') keys.w = false;
+            if (e.key === 'a') keys.a = false;
+            if (e.key === 's') keys.s = false;
+            if (e.key === 'd') keys.d = false;
+        });
     </script>
 </body>
 </html>
