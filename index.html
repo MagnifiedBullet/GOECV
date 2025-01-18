@@ -44,9 +44,9 @@
         const joystickImage = new Image();
         joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
 
-        // Jump button sprite sheet
-        const jumpButtonImage = new Image();
-        jumpButtonImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/X-button.png';
+        // Updated button sprite sheet (X and Square buttons)
+        const buttonsImage = new Image();
+        buttonsImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/X-buttonplus.png';
 
         // Player properties
         const player = {
@@ -54,54 +54,30 @@
             y: 300,
             width: 16,
             height: 30,
-            speed: 2, // Movement speed
-            direction: 'down',
-            frameX: 0,
-            frameY: 0,
-            walkingCycle: 0,
-            animationCounter: 0,
-            velocityY: 0, // Y velocity for jumping
-            isJumping: false
+            speed: 2,
         };
 
-        // Joystick properties
-        const joystick = {
-            x: 100, // Base position of the joystick
-            y: canvas.height - 150,
-            radius: 50, // Radius of the joystick base
-            frameWidth: 128, // Width of each frame on the sprite sheet
-            frameHeight: 128, // Height of each frame on the sprite sheet
-            currentFrame: 0, // The frame corresponding to the current direction
-            frames: {
-                idle: { x: 0, y: 0 },       // Middle (idle)
-                nw: { x: 1, y: 0 },         // NorthWest
-                n: { x: 2, y: 0 },          // North
-                ne: { x: 3, y: 0 },         // NorthEast
-                e: { x: 4, y: 0 },          // East
-                se: { x: 5, y: 0 },         // SouthEast
-                s: { x: 6, y: 0 },          // South
-                sw: { x: 7, y: 0 },         // SouthWest
-                w: { x: 8, y: 0 }           // West
-            }
-        };
-
-        // Jump button properties
-        const jumpButton = {
-            x: canvas.width - 120,
-            y: canvas.height - 120,
-            width: 100,
-            height: 100,
-            idleFrame: 0,
-            pressedFrame: 1,
-            currentFrame: 0
-        };
-
-        // Keyboard input flags
-        const keys = {
-            w: false,
-            a: false,
-            s: false,
-            d: false
+        // Buttons properties
+        const buttons = {
+            x: canvas.width - 120, // Right-hand side
+            xButton: {
+                y: canvas.height - 120, // Bottom-right position for X button
+                width: 100,
+                height: 100,
+                idleFrameX: 0, // Idle frame X position
+                pressedFrameX: 1, // Pressed frame X position
+                currentFrameX: 0, // Start with idle frame
+                isPressed: false,
+            },
+            squareButton: {
+                y: canvas.height - 240, // Above the X button
+                width: 100,
+                height: 100,
+                idleFrameX: 2, // Idle frame X position
+                pressedFrameX: 3, // Pressed frame X position
+                currentFrameX: 2, // Start with idle frame
+                isPressed: false,
+            },
         };
 
         // Ensure all assets are loaded before starting the game
@@ -116,95 +92,103 @@
 
         joystickImage.onload = checkAssetsLoaded;
         playerImage.onload = checkAssetsLoaded;
-        jumpButtonImage.onload = checkAssetsLoaded;
+        buttonsImage.onload = checkAssetsLoaded;
 
-        // Draw the joystick (base + handle based on direction)
-        function drawJoystick() {
-            // Draw the joystick base (stationary)
-            ctx.drawImage(joystickImage, 0, 0, 128, 128, joystick.x - joystick.radius, joystick.y - joystick.radius, joystick.radius * 2, joystick.radius * 2);
-
-            // Draw the joystick handle (based on direction)
-            const frame = Object.values(joystick.frames)[joystick.currentFrame];
+        // Draw the buttons
+        function drawButtons() {
+            // Draw X button
             ctx.drawImage(
-                joystickImage,
-                frame.x * joystick.frameWidth, frame.y * joystick.frameHeight, // Source position in sprite sheet
-                joystick.frameWidth, joystick.frameHeight, // Source size
-                joystick.x - joystick.radius, joystick.y - joystick.radius, // Destination position
-                joystick.radius * 2, joystick.radius * 2 // Destination size
+                buttonsImage,
+                buttons.xButton.currentFrameX * buttons.xButton.width, 0, // Source position in sprite sheet
+                buttons.xButton.width, buttons.xButton.height, // Source size
+                buttons.x, buttons.xButton.y, // Destination position
+                buttons.xButton.width, buttons.xButton.height // Destination size
+            );
+
+            // Draw Square button
+            ctx.drawImage(
+                buttonsImage,
+                buttons.squareButton.currentFrameX * buttons.squareButton.width, 0, // Source position in sprite sheet
+                buttons.squareButton.width, buttons.squareButton.height, // Source size
+                buttons.x, buttons.squareButton.y, // Destination position
+                buttons.squareButton.width, buttons.squareButton.height // Destination size
             );
         }
 
-        // Update joystick direction based on player movement
-        function updateJoystickDirection() {
-            if (keys.w && keys.a) joystick.currentFrame = 1; // NorthWest
-            else if (keys.w && keys.d) joystick.currentFrame = 3; // NorthEast
-            else if (keys.s && keys.a) joystick.currentFrame = 7; // SouthWest
-            else if (keys.s && keys.d) joystick.currentFrame = 5; // SouthEast
-            else if (keys.w) joystick.currentFrame = 2; // North
-            else if (keys.s) joystick.currentFrame = 6; // South
-            else if (keys.a) joystick.currentFrame = 8; // West
-            else if (keys.d) joystick.currentFrame = 4; // East
-            else joystick.currentFrame = 0; // Idle
+        // Handle button clicks
+        function handleButtonClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Check for X button click
+            if (
+                mouseX >= buttons.x &&
+                mouseX <= buttons.x + buttons.xButton.width &&
+                mouseY >= buttons.xButton.y &&
+                mouseY <= buttons.xButton.y + buttons.xButton.height
+            ) {
+                buttons.xButton.isPressed = true;
+                buttons.xButton.currentFrameX = buttons.xButton.pressedFrameX;
+                console.log("X Button Pressed");
+            }
+
+            // Check for Square button click
+            if (
+                mouseX >= buttons.x &&
+                mouseX <= buttons.x + buttons.squareButton.width &&
+                mouseY >= buttons.squareButton.y &&
+                mouseY <= buttons.squareButton.y + buttons.squareButton.height
+            ) {
+                buttons.squareButton.isPressed = true;
+                buttons.squareButton.currentFrameX = buttons.squareButton.pressedFrameX;
+                console.log("Square Button Pressed");
+            }
         }
 
-        // Update player movement based on WASD keyboard input
-        function updatePlayerMovementKeyboard() {
-            if (keys.w) player.y -= player.speed;
-            if (keys.s) player.y += player.speed;
-            if (keys.a) player.x -= player.speed;
-            if (keys.d) player.x += player.speed;
-
-            // Update joystick direction
-            updateJoystickDirection();
+        // Reset button states after interaction
+        function resetButtonStates() {
+            if (buttons.xButton.isPressed) {
+                buttons.xButton.isPressed = false;
+                buttons.xButton.currentFrameX = buttons.xButton.idleFrameX;
+            }
+            if (buttons.squareButton.isPressed) {
+                buttons.squareButton.isPressed = false;
+                buttons.squareButton.currentFrameX = buttons.squareButton.idleFrameX;
+            }
         }
 
-        // Draw the jump button
-        function drawJumpButton() {
-            ctx.drawImage(jumpButtonImage, jumpButton.currentFrame * 100, 0, 100, 100, jumpButton.x, jumpButton.y, jumpButton.width, jumpButton.height);
+        // Draw the player character
+        function drawPlayer() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
         }
 
         // Game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the joystick
-            drawJoystick();
+            // Draw the buttons
+            drawButtons();
 
-            // Draw the jump button
-            drawJumpButton();
+            // Reset button states (simulate release after press)
+            resetButtonStates();
 
-            // Update player movement based on keyboard input
-            updatePlayerMovementKeyboard();
-
-            // Draw player
-            ctx.drawImage(
-                playerImage,
-                player.frameX * player.width,
-                player.frameY * player.height,
-                player.width,
-                player.height,
-                player.x,
-                player.y,
-                player.width,
-                player.height
-            );
+            // Draw the player
+            drawPlayer();
 
             requestAnimationFrame(gameLoop);
         }
 
+        // Add mouse event listener for button interaction
+        canvas.addEventListener('mousedown', handleButtonClick);
+
         // Handle keyboard input
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'w') keys.w = true;
-            if (e.key === 'a') keys.a = true;
-            if (e.key === 's') keys.s = true;
-            if (e.key === 'd') keys.d = true;
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'w') keys.w = false;
-            if (e.key === 'a') keys.a = false;
-            if (e.key === 's') keys.s = false;
-            if (e.key === 'd') keys.d = false;
+            if (e.key === 'w') player.y -= player.speed;
+            if (e.key === 's') player.y += player.speed;
+            if (e.key === 'a') player.x -= player.speed;
+            if (e.key === 'd') player.x += player.speed;
         });
     </script>
 </body>
