@@ -101,14 +101,14 @@
 
         // Directions to frame mapping (row/column positions in the sprite sheet)
         const directions = {
-            up: { row: 0, col: 0 },
-            ne: { row: 0, col: 1 },
-            right: { row: 0, col: 2 },
-            se: { row: 0, col: 3 },
-            down: { row: 1, col: 4 },
-            sw: { row: 1, col: 5 },
-            left: { row: 1, col: 6 },
-            nw: { row: 1, col: 7 }
+            up: { col: 0 },    // North
+            ne: { col: 1 },    // NorthEast
+            right: { col: 2 }, // East
+            se: { col: 3 },    // SouthEast
+            down: { col: 4 },  // South
+            sw: { col: 5 },    // SouthWest
+            left: { col: 6 },  // West
+            nw: { col: 7 }     // NorthWest
         };
 
         // Key press tracking
@@ -187,16 +187,13 @@
 
             // Update player sprite frame based on direction
             const direction = directions[player.direction];
-
-            // Control walking animation cycle (toggle between 2 frames)
-            player.frameX = (player.walkingCycle % 2) * player.width;
-            player.frameY = direction.row;
+            const row = player.walkingCycle % 2 === 0 ? 1 : 3; // Use walking frames from row 1 and row 3
 
             // Draw player sprite
             ctx.drawImage(
                 playerImage,
-                player.frameX, // Source X
-                direction.col * player.height, // Source Y (using column index for direction)
+                direction.col * player.width, // Source X (column-based)
+                row * player.height, // Source Y (row-based for walking and idle)
                 player.width, // Source Width
                 player.height, // Source Height
                 player.x, // Destination X
