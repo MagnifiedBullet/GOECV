@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isometric Tile Game</title>
+    <title>Isometric Collision Detection</title>
     <style>
         body {
             background-color: #1e1e2c;
@@ -36,37 +36,17 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Tile sprite sheet
-        const tileImage = new Image();
-        tileImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/isometric%20tileset/spritesheet.png';
-
         // Player sprite sheet
         const playerImage = new Image();
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
 
-        // Tile properties (adjusted for smaller size)
-        const originalTileWidth = 64; // Original isometric tile width
-        const originalTileHeight = 32; // Original isometric tile height
-        const tileWidth = originalTileWidth / 3; // Scaled width
-        const tileHeight = originalTileHeight / 3; // Scaled height
-        const tilesPerRow = 8; // Number of tiles in one row of the tile sheet
-
-        // Level data (adds water, rocks, grass, flowers, and dirt tiles)
-        const level = [
-            [0, 1, 1, 0, 4], // Water tiles
-            [2, 3, 4, 3, 2], // Grass tiles
-            [1, 5, 6, 5, 1], // Flower tiles
-            [3, 2, 4, 2, 3], // Rock tiles
-            [4, 0, 1, 0, 4], // Dirt tiles
-        ];
-
         // Player properties
         const player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
+            x: 400,
+            y: 300,
             width: 16,
             height: 30,
-            speed: 1.0,
+            speed: 2, // Movement speed
             direction: 'down',
             frameX: 0,
             frameY: 0,
@@ -74,46 +54,46 @@
             animationCounter: 0
         };
 
-        // Ensure assets are fully loaded before starting the game
-        let assetsLoaded = 0;
+        // Collision areas (rectangles corresponding to impassable areas in Background.PNG)
+        const collisionZones = [
+            { x: 200, y: 400, width: 100, height: 50 }, // Example collision zone
+            { x: 500, y: 300, width: 120, height: 80 }, // Another collision zone
+            // Add more zones as needed to match Background.PNG
+        ];
 
-        function checkAssetsLoaded() {
-            assetsLoaded++;
-            if (assetsLoaded === 2) {
-                gameLoop(); // Start the game loop once both assets are loaded
-            }
-        }
+        // Ensure the player image is loaded before starting the game
+        playerImage.onload = () => {
+            gameLoop();
+        };
 
-        tileImage.onload = checkAssetsLoaded;
-        playerImage.onload = checkAssetsLoaded;
-
-        // Cut out and draw a single tile
-        function drawTile(tileIndex, x, y) {
-            const tileX = (tileIndex % tilesPerRow) * originalTileWidth;
-            const tileY = Math.floor(tileIndex / tilesPerRow) * originalTileHeight;
-
-            ctx.drawImage(
-                tileImage,
-                tileX, tileY, // Source position on the sprite sheet
-                originalTileWidth, originalTileHeight, // Source size
-                x, y, // Destination position
-                tileWidth, tileHeight // Destination size (scaled)
+        // Check for collision between the player and a collision zone
+        function checkCollision(player, zone) {
+            return (
+                player.x < zone.x + zone.width &&
+                player.x + player.width > zone.x &&
+                player.y < zone.y + zone.height &&
+                player.y + player.height > zone.y
             );
         }
 
-        // Draw the entire level in a diamond pattern
-        function drawLevel() {
-            const startX = canvas.width / 2 - (level[0].length * tileWidth) / 2; // Center horizontally
-            const startY = canvas.height / 2 - (level.length * tileHeight) / 2; // Center vertically
-
-            for (let row = 0; row < level.length; row++) {
-                for (let col = 0; col < level[row].length; col++) {
-                    const tileIndex = level[row][col];
-                    const x = startX + (col - row) * (tileWidth / 2); // Isometric X
-                    const y = startY + (col + row) * (tileHeight / 2); // Isometric Y
-
-                    drawTile(tileIndex, x, y);
+        // Prevent the player from moving into a collision zone
+        function handleCollisions() {
+            for (const zone of collisionZones) {
+                if (checkCollision(player, zone)) {
+                    // Prevent movement based on collision direction
+                    if (player.direction === 'left') player.x = zone.x + zone.width;
+                    if (player.direction === 'right') player.x = zone.x - player.width;
+                    if (player.direction === 'up') player.y = zone.y + zone.height;
+                    if (player.direction === 'down') player.y = zone.y - player.height;
                 }
+            }
+        }
+
+        // Draw collision zones for debugging
+        function drawCollisionZones() {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Semi-transparent red
+            for (const zone of collisionZones) {
+                ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
             }
         }
 
@@ -121,15 +101,33 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw tiles
-            drawLevel();
+            // Movement logic
+            const keys = {
+                ArrowUp: () => {
+                    player.y -= player.speed;
+                    player.direction = 'up';
+                },
+                ArrowDown: () => {
+                    player.y += player.speed;
+                    player.direction = 'down';
+                },
+                ArrowLeft: () => {
+                    player.x -= player.speed;
+                    player.direction = 'left';
+                },
+                ArrowRight: () => {
+                    player.x += player.speed;
+                    player.direction = 'right';
+                }
+            };
 
-            // Update animation
-            player.animationCounter++;
-            if (player.animationCounter >= 15) { // Slower animation
-                player.walkingCycle = (player.walkingCycle + 1) % 2;
-                player.animationCounter = 0;
-            }
+            // Listen for arrow key input
+            document.addEventListener('keydown', (e) => {
+                if (keys[e.key]) keys[e.key]();
+            });
+
+            // Handle collisions
+            handleCollisions();
 
             // Draw player
             const row = player.walkingCycle === 0 ? 1 : 3;
@@ -144,6 +142,16 @@
                 player.width,
                 player.height
             );
+
+            // Draw collision zones (for debugging, optional)
+            drawCollisionZones();
+
+            // Update animation
+            player.animationCounter++;
+            if (player.animationCounter >= 15) { // Slower animation
+                player.walkingCycle = (player.walkingCycle + 1) % 2;
+                player.animationCounter = 0;
+            }
 
             requestAnimationFrame(gameLoop);
         }
