@@ -82,16 +82,16 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Player sprite sheet
+        // Player sprite sheet (corrected size for vertical and rectangular sprites)
         const playerImage = new Image();
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
 
         // Player properties
         const player = {
             x: canvas.width / 2 - 16,
-            y: canvas.height / 2 - 16,
-            width: 32,
-            height: 32, // Consistent frame size
+            y: canvas.height / 2 - 32, // Adjusted for vertical sprite
+            width: 16,  // Corrected width (smaller, rectangular)
+            height: 32, // Corrected height (taller)
             speed: 5,
             direction: 'down', // Default direction
             frameX: 0,
@@ -194,8 +194,8 @@
                 playerImage,
                 direction.col * player.width, // Source X (column-based)
                 row * player.height, // Source Y (row-based for walking and idle)
-                player.width, // Source Width
-                player.height, // Source Height
+                player.width, // Source Width (16px, smaller width)
+                player.height, // Source Height (32px, taller height)
                 player.x, // Destination X
                 player.y, // Destination Y
                 player.width, // Destination Width
