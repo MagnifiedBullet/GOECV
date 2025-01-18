@@ -36,9 +36,26 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Updated button sprite sheet (8 frames: 4 for X, 4 for Square)
+        // Player sprite sheet
+        const playerImage = new Image();
+        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
+
+        // Updated button sprite sheet
         const buttonsImage = new Image();
-        buttonsImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/X-buttonplus.png';
+        buttonsImage.src = 'https://github.com/MagnifiedBullet/GOECV/blob/main/Assets/Xbuttonsplus.png';
+
+        // Player properties
+        const player = {
+            x: 400,
+            y: 300,
+            width: 16,
+            height: 30,
+            frameX: 0,
+            frameY: 0,
+            speed: 2,
+            walkingCycle: 0,
+            animationCounter: 0,
+        };
 
         // Button properties
         const buttons = {
@@ -47,8 +64,9 @@
                 y: canvas.height - 120, // Bottom-right position
                 width: 100,
                 height: 100,
-                idleFrame: 0, // Top row, 1st frame
-                finalFrame: 3, // Top row, 4th frame
+                idleFrame: 0, // Idle frame index
+                transitionFrame: 1, // Transition frame index
+                pressedFrame: 2, // Pressed frame index
                 currentFrame: 0, // Start at idle frame
                 isPressed: false,
                 animationSpeed: 8, // Frames per update
@@ -59,8 +77,9 @@
                 y: canvas.height - 240, // Above the X button
                 width: 100,
                 height: 100,
-                idleFrame: 0, // Bottom row, 1st frame
-                finalFrame: 3, // Bottom row, 4th frame
+                idleFrame: 0, // Idle frame index
+                transitionFrame: 1, // Transition frame index
+                pressedFrame: 2, // Pressed frame index
                 currentFrame: 0, // Start at idle frame
                 isPressed: false,
                 animationSpeed: 8, // Frames per update
@@ -69,10 +88,18 @@
             }
         };
 
-        // Ensure the button sprite sheet is loaded before starting the game
-        buttonsImage.onload = () => {
-            gameLoop(); // Start the game loop once the sprite sheet is loaded
-        };
+        // Ensure all assets are loaded before starting the game
+        let assetsLoaded = 0;
+
+        function checkAssetsLoaded() {
+            assetsLoaded++;
+            if (assetsLoaded === 2) {
+                gameLoop(); // Start the game loop once both sprite sheets are loaded
+            }
+        }
+
+        playerImage.onload = checkAssetsLoaded;
+        buttonsImage.onload = checkAssetsLoaded;
 
         // Draw the buttons
         function drawButtons() {
@@ -98,12 +125,12 @@
         // Animate button frames
         function animateButton(button) {
             if (button.isPressed) {
-                // Advance frames when pressed
-                if (button.currentFrame < button.finalFrame && button.animationCounter === 0) {
+                // Transition to pressed state
+                if (button.currentFrame < button.pressedFrame && button.animationCounter === 0) {
                     button.currentFrame++;
                 }
             } else {
-                // Reverse frames when unpressed
+                // Transition back to idle state
                 if (button.currentFrame > button.idleFrame && button.animationCounter === 0) {
                     button.currentFrame--;
                 }
@@ -111,6 +138,17 @@
 
             // Update animation counter
             button.animationCounter = (button.animationCounter + 1) % button.animationSpeed;
+        }
+
+        // Draw the player character
+        function drawPlayer() {
+            ctx.drawImage(
+                playerImage,
+                player.frameX * player.width, player.frameY * player.height, // Source position in sprite sheet
+                player.width, player.height, // Source size
+                player.x, player.y, // Destination position
+                player.width, player.height // Destination size
+            );
         }
 
         // Handle button clicks
@@ -158,6 +196,9 @@
 
             // Draw the buttons
             drawButtons();
+
+            // Draw the player
+            drawPlayer();
 
             requestAnimationFrame(gameLoop);
         }
