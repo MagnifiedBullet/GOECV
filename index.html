@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garden of Eeden</title>
+    <title>Isometric Pixel Art Game</title>
     <style>
         body {
             background-color: #1e1e2c;
@@ -193,7 +193,7 @@
             ctx.drawImage(
                 playerImage,
                 direction.col * player.width, // Source X (column-based)
-                row * 32 + 1, // Source Y, adjusted slightly lower
+                row * 32 - 12, // Source Y, moved 12px higher
                 player.width, // Source Width (16px, smaller width)
                 player.height, // Source Height (30px, adjusted height)
                 player.x, // Destination X
