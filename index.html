@@ -14,8 +14,6 @@
         canvas {
             display: block;
             margin: auto;
-            background: url('https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG') no-repeat center center;
-            background-size: cover;
         }
         h1 {
             position: absolute;
@@ -36,18 +34,21 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Sprite sheets
+        // Load images for player, joystick, buttons, and background
         const playerImage = new Image();
         const joystickImage = new Image();
         const buttonsImage = new Image();
-        
+        const backgroundImage = new Image();
+
+        // Load assets
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
         joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
         buttonsImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Xbuttonsplus.png';
+        backgroundImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG';
 
         // Game state variables
         let assetsLoaded = 0;
-        const totalAssets = 3;  // Total number of assets to load
+        const totalAssets = 4;  // Total number of assets to load
 
         // Variables for player, joystick, and buttons
         const player = { x: 400, y: 300, width: 32, height: 32, speed: 2, frameX: 0, frameY: 0 };
@@ -70,6 +71,12 @@
         playerImage.onload = checkAssetsLoaded;
         joystickImage.onload = checkAssetsLoaded;
         buttonsImage.onload = checkAssetsLoaded;
+        backgroundImage.onload = checkAssetsLoaded;
+
+        // Function to draw the background
+        function drawBackground() {
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        }
 
         // Function to draw the player on the canvas
         function drawPlayer() {
@@ -156,9 +163,11 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
 
-            drawPlayer();  // Draw the player
-            drawJoystick();  // Draw the joystick
-            drawButtons();  // Draw the buttons
+            drawBackground();  // Draw the background first
+
+            drawPlayer();  // Draw the player on top of the background
+            drawJoystick();  // Draw the joystick on top of the background
+            drawButtons();  // Draw the buttons on top of the background
 
             animateButton(buttons.xButton);  // Animate X button
             animateButton(buttons.squareButton);  // Animate Square button
