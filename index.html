@@ -36,26 +36,9 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Player sprite sheet
-        const playerImage = new Image();
-        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
-
-        // Joystick sprite sheet
-        const joystickImage = new Image();
-        joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
-
         // Updated button sprite sheet (X and Square buttons)
         const buttonsImage = new Image();
         buttonsImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/X-buttonplus.png';
-
-        // Player properties
-        const player = {
-            x: 400,
-            y: 300,
-            width: 16,
-            height: 30,
-            speed: 2,
-        };
 
         // Buttons properties
         const buttons = {
@@ -64,42 +47,37 @@
                 y: canvas.height - 120, // Bottom-right position for X button
                 width: 100,
                 height: 100,
-                idleFrameX: 0, // Idle frame X position
-                pressedFrameX: 1, // Pressed frame X position
-                currentFrameX: 0, // Start with idle frame
-                isPressed: false,
+                idleFrame: 0, // Idle frame index
+                finalFrame: 3, // Final frame index for pressed state
+                currentFrame: 0, // Start at idle frame
+                isPressed: false, // Button state
+                animationSpeed: 5, // Number of frames before advancing
+                animationCounter: 0, // Counter for frame timing
             },
             squareButton: {
                 y: canvas.height - 240, // Above the X button
                 width: 100,
                 height: 100,
-                idleFrameX: 2, // Idle frame X position
-                pressedFrameX: 3, // Pressed frame X position
-                currentFrameX: 2, // Start with idle frame
-                isPressed: false,
+                idleFrame: 4, // Idle frame index
+                finalFrame: 7, // Final frame index for pressed state
+                currentFrame: 4, // Start at idle frame
+                isPressed: false, // Button state
+                animationSpeed: 5, // Number of frames before advancing
+                animationCounter: 0, // Counter for frame timing
             },
         };
 
-        // Ensure all assets are loaded before starting the game
-        let assetsLoaded = 0;
-
-        function checkAssetsLoaded() {
-            assetsLoaded++;
-            if (assetsLoaded === 3) {
-                gameLoop(); // Start the game loop once all assets are loaded
-            }
-        }
-
-        joystickImage.onload = checkAssetsLoaded;
-        playerImage.onload = checkAssetsLoaded;
-        buttonsImage.onload = checkAssetsLoaded;
+        // Ensure the button sprite sheet is loaded before starting the game
+        buttonsImage.onload = () => {
+            gameLoop(); // Start the game loop once the sprite sheet is loaded
+        };
 
         // Draw the buttons
         function drawButtons() {
             // Draw X button
             ctx.drawImage(
                 buttonsImage,
-                buttons.xButton.currentFrameX * buttons.xButton.width, 0, // Source position in sprite sheet
+                buttons.xButton.currentFrame * buttons.xButton.width, 0, // Source position in sprite sheet
                 buttons.xButton.width, buttons.xButton.height, // Source size
                 buttons.x, buttons.xButton.y, // Destination position
                 buttons.xButton.width, buttons.xButton.height // Destination size
@@ -108,11 +86,29 @@
             // Draw Square button
             ctx.drawImage(
                 buttonsImage,
-                buttons.squareButton.currentFrameX * buttons.squareButton.width, 0, // Source position in sprite sheet
+                buttons.squareButton.currentFrame * buttons.squareButton.width, 0, // Source position in sprite sheet
                 buttons.squareButton.width, buttons.squareButton.height, // Source size
                 buttons.x, buttons.squareButton.y, // Destination position
                 buttons.squareButton.width, buttons.squareButton.height // Destination size
             );
+        }
+
+        // Animate button frames
+        function animateButton(button) {
+            if (button.isPressed) {
+                // Advance frames when pressed
+                if (button.currentFrame < button.finalFrame && button.animationCounter === 0) {
+                    button.currentFrame++;
+                }
+            } else {
+                // Reverse frames when unpressed
+                if (button.currentFrame > button.idleFrame && button.animationCounter === 0) {
+                    button.currentFrame--;
+                }
+            }
+
+            // Update animation counter
+            button.animationCounter = (button.animationCounter + 1) % button.animationSpeed;
         }
 
         // Handle button clicks
@@ -129,7 +125,6 @@
                 mouseY <= buttons.xButton.y + buttons.xButton.height
             ) {
                 buttons.xButton.isPressed = true;
-                buttons.xButton.currentFrameX = buttons.xButton.pressedFrameX;
                 console.log("X Button Pressed");
             }
 
@@ -141,55 +136,33 @@
                 mouseY <= buttons.squareButton.y + buttons.squareButton.height
             ) {
                 buttons.squareButton.isPressed = true;
-                buttons.squareButton.currentFrameX = buttons.squareButton.pressedFrameX;
                 console.log("Square Button Pressed");
             }
         }
 
-        // Reset button states after interaction
-        function resetButtonStates() {
-            if (buttons.xButton.isPressed) {
-                buttons.xButton.isPressed = false;
-                buttons.xButton.currentFrameX = buttons.xButton.idleFrameX;
-            }
-            if (buttons.squareButton.isPressed) {
-                buttons.squareButton.isPressed = false;
-                buttons.squareButton.currentFrameX = buttons.squareButton.idleFrameX;
-            }
-        }
-
-        // Draw the player character
-        function drawPlayer() {
-            ctx.fillStyle = 'red';
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+        // Handle button release
+        function handleButtonRelease(e) {
+            buttons.xButton.isPressed = false;
+            buttons.squareButton.isPressed = false;
         }
 
         // Game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Animate buttons
+            animateButton(buttons.xButton);
+            animateButton(buttons.squareButton);
+
             // Draw the buttons
             drawButtons();
-
-            // Reset button states (simulate release after press)
-            resetButtonStates();
-
-            // Draw the player
-            drawPlayer();
 
             requestAnimationFrame(gameLoop);
         }
 
-        // Add mouse event listener for button interaction
+        // Add mouse event listeners for button interaction
         canvas.addEventListener('mousedown', handleButtonClick);
-
-        // Handle keyboard input
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'w') player.y -= player.speed;
-            if (e.key === 's') player.y += player.speed;
-            if (e.key === 'a') player.x -= player.speed;
-            if (e.key === 'd') player.x += player.speed;
-        });
+        canvas.addEventListener('mouseup', handleButtonRelease);
     </script>
 </body>
 </html>
