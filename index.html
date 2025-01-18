@@ -26,13 +26,12 @@
             color: white;
             text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
         }
-        /* D-Pad Styling */
         .dpad {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            width: 150px;
+            width: 200px;
             height: 150px;
             display: flex;
             justify-content: space-between;
@@ -67,14 +66,11 @@
     <!-- D-Pad HTML Controls -->
     <div class="dpad">
         <div class="dpad-row">
-            <button class="dpad-button" id="up">↑</button>
+            <button class="dpad-button" id="jump">⭡</button>
         </div>
         <div class="dpad-row">
             <button class="dpad-button" id="left">←</button>
             <button class="dpad-button" id="right">→</button>
-        </div>
-        <div class="dpad-row">
-            <button class="dpad-button" id="down">↓</button>
         </div>
     </div>
 
@@ -88,122 +84,131 @@
 
         // Player properties
         const player = {
-            x: canvas.width / 2 - 8, // Adjusted for smaller sprite width
-            y: canvas.height / 2 - 15, // Adjusted for smaller sprite height
-            width: 16,  // Adjusted sprite width
-            height: 30, // Adjusted sprite height
-            speed: 5,
-            direction: 'down', // Default direction
+            x: canvas.width / 2 - 8,
+            y: 300, // Start higher
+            width: 16,
+            height: 30,
+            speed: 1.5, // Slower movement speed
+            jumpStrength: -8,
+            gravity: 0.3,
+            velocityY: 0,
+            grounded: false,
+            direction: 'down',
             frameX: 0,
             frameY: 0,
-            walkingCycle: 0 // To control the walking animation cycle
+            walkingCycle: 0,
+            animationCounter: 0 // Controls animation speed
         };
 
-        // Directions to frame mapping (column positions in the sprite sheet)
-        const directions = {
-            up: { col: 0 },    // North
-            ne: { col: 1 },    // NorthEast
-            right: { col: 2 }, // East
-            se: { col: 3 },    // SouthEast
-            down: { col: 4 },  // South
-            sw: { col: 5 },    // SouthWest
-            left: { col: 6 },  // West
-            nw: { col: 7 }     // NorthWest
+        // Object to collide with (example: a tall object)
+        const obstacle = {
+            x: 400,
+            y: 500,
+            width: 50,
+            height: 100 // Taller than the player
         };
 
         // Key press tracking
         const keys = {
-            ArrowUp: false,
-            ArrowDown: false,
             ArrowLeft: false,
-            ArrowRight: false
+            ArrowRight: false,
+            Space: false // Jump key
         };
 
-        // Event listeners for key presses (for mobile D-Pad)
-        const buttons = {
-            up: document.getElementById('up'),
-            down: document.getElementById('down'),
-            left: document.getElementById('left'),
-            right: document.getElementById('right')
-        };
+        // Event listeners for key presses
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') keys.ArrowLeft = true;
+            if (e.key === 'ArrowRight') keys.ArrowRight = true;
+            if (e.key === ' ') keys.Space = true;
+        });
 
-        // D-Pad button events
-        buttons.up.addEventListener('click', () => keys.ArrowUp = true);
-        buttons.down.addEventListener('click', () => keys.ArrowDown = true);
-        buttons.left.addEventListener('click', () => keys.ArrowLeft = true);
-        buttons.right.addEventListener('click', () => keys.ArrowRight = true);
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') keys.ArrowLeft = false;
+            if (e.key === 'ArrowRight') keys.ArrowRight = false;
+            if (e.key === ' ') keys.Space = false;
+        });
 
-        // Stop moving when button is released
+        // D-Pad controls for mobile
+        document.getElementById('left').addEventListener('mousedown', () => keys.ArrowLeft = true);
+        document.getElementById('right').addEventListener('mousedown', () => keys.ArrowRight = true);
+        document.getElementById('jump').addEventListener('mousedown', () => keys.Space = true);
         document.addEventListener('mouseup', () => {
-            keys.ArrowUp = false;
-            keys.ArrowDown = false;
             keys.ArrowLeft = false;
             keys.ArrowRight = false;
+            keys.Space = false;
         });
 
         // Game loop
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Update player position and direction based on key presses
-            if (keys.ArrowUp && keys.ArrowLeft) {
-                player.x -= player.speed / Math.sqrt(2);
-                player.y -= player.speed / Math.sqrt(2);
-                player.direction = 'nw';
-            } else if (keys.ArrowUp && keys.ArrowRight) {
-                player.x += player.speed / Math.sqrt(2);
-                player.y -= player.speed / Math.sqrt(2);
-                player.direction = 'ne';
-            } else if (keys.ArrowDown && keys.ArrowLeft) {
-                player.x -= player.speed / Math.sqrt(2);
-                player.y += player.speed / Math.sqrt(2);
-                player.direction = 'sw';
-            } else if (keys.ArrowDown && keys.ArrowRight) {
-                player.x += player.speed / Math.sqrt(2);
-                player.y += player.speed / Math.sqrt(2);
-                player.direction = 'se';
+            // Gravity
+            player.velocityY += player.gravity;
+            player.y += player.velocityY;
+
+            // Check ground collision
+            if (player.y + player.height >= canvas.height) {
+                player.y = canvas.height - player.height;
+                player.grounded = true;
+                player.velocityY = 0;
             } else {
-                if (keys.ArrowUp) {
-                    player.y -= player.speed;
-                    player.direction = 'up';
-                }
-                if (keys.ArrowDown) {
-                    player.y += player.speed;
-                    player.direction = 'down';
-                }
-                if (keys.ArrowLeft) {
-                    player.x -= player.speed;
-                    player.direction = 'left';
-                }
-                if (keys.ArrowRight) {
-                    player.x += player.speed;
-                    player.direction = 'right';
-                }
+                player.grounded = false;
             }
 
-            // Prevent player from going out of bounds
+            // Jumping
+            if (keys.Space && player.grounded) {
+                player.velocityY = player.jumpStrength;
+                player.grounded = false;
+            }
+
+            // Horizontal movement
+            if (keys.ArrowLeft) player.x -= player.speed;
+            if (keys.ArrowRight) player.x += player.speed;
+
+            // Obstacle collision
+            if (
+                player.x < obstacle.x + obstacle.width &&
+                player.x + player.width > obstacle.x &&
+                player.y + player.height > obstacle.y &&
+                player.y < obstacle.y + obstacle.height
+            ) {
+                // Prevent horizontal movement through obstacle
+                if (player.x < obstacle.x) player.x = obstacle.x - player.width;
+                else if (player.x > obstacle.x) player.x = obstacle.x + obstacle.width;
+            }
+
+            // Prevent player from leaving the canvas
             player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            player.y = Math.min(player.y, canvas.height - player.height);
 
-            // Update player sprite frame based on direction
-            const direction = directions[player.direction];
-            const row = player.walkingCycle % 2 === 0 ? 1 : 3; // Use walking frames from row 1 and row 3
+            // Update animation
+            if (keys.ArrowLeft || keys.ArrowRight) {
+                player.animationCounter++;
+                if (player.animationCounter >= 10) { // Slower animation
+                    player.walkingCycle = (player.walkingCycle + 1) % 2;
+                    player.animationCounter = 0;
+                }
+            } else {
+                player.walkingCycle = 0; // Idle frame
+            }
 
-            // Draw player sprite
+            // Draw player
+            const row = player.walkingCycle === 0 ? 1 : 3; // Alternate between walking rows
             ctx.drawImage(
                 playerImage,
-                direction.col * player.width, // Source X (column-based)
-                row * 32 - 12, // Source Y, moved 12px higher
-                player.width, // Source Width (16px, smaller width)
-                player.height, // Source Height (30px, adjusted height)
-                player.x, // Destination X
-                player.y, // Destination Y
-                player.width, // Destination Width
-                player.height // Destination Height
+                player.frameX * player.width,
+                row * 32 - 12, // Adjusted for 12px shift
+                player.width,
+                player.height,
+                player.x,
+                player.y,
+                player.width,
+                player.height
             );
 
-            // Cycle walking frames for animation
-            player.walkingCycle = (player.walkingCycle + 1) % 4;
+            // Draw obstacle
+            ctx.fillStyle = 'brown';
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 
             requestAnimationFrame(gameLoop);
         }
