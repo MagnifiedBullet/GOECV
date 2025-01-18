@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isometric Pixel Art Game</title>
+    <title>Garden of Eeden</title>
     <style>
         body {
             background-color: #1e1e2c;
@@ -82,16 +82,16 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Player sprite sheet (corrected size for vertical and rectangular sprites)
+        // Player sprite sheet
         const playerImage = new Image();
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
 
         // Player properties
         const player = {
-            x: canvas.width / 2 - 16,
-            y: canvas.height / 2 - 32, // Adjusted for vertical sprite
-            width: 16,  // Corrected width (smaller, rectangular)
-            height: 32, // Corrected height (taller)
+            x: canvas.width / 2 - 8, // Adjusted for smaller sprite width
+            y: canvas.height / 2 - 15, // Adjusted for smaller sprite height
+            width: 16,  // Adjusted sprite width
+            height: 30, // Adjusted sprite height
             speed: 5,
             direction: 'down', // Default direction
             frameX: 0,
@@ -99,7 +99,7 @@
             walkingCycle: 0 // To control the walking animation cycle
         };
 
-        // Directions to frame mapping (row/column positions in the sprite sheet)
+        // Directions to frame mapping (column positions in the sprite sheet)
         const directions = {
             up: { col: 0 },    // North
             ne: { col: 1 },    // NorthEast
@@ -193,9 +193,9 @@
             ctx.drawImage(
                 playerImage,
                 direction.col * player.width, // Source X (column-based)
-                row * player.height, // Source Y (row-based for walking and idle)
+                row * 32 + 1, // Source Y, adjusted slightly lower
                 player.width, // Source Width (16px, smaller width)
-                player.height, // Source Height (32px, taller height)
+                player.height, // Source Height (30px, adjusted height)
                 player.x, // Destination X
                 player.y, // Destination Y
                 player.width, // Destination Width
