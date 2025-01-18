@@ -45,17 +45,18 @@
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
 
         // Tile properties
-        const tileWidth = 64;  // Isometric tile width
-        const tileHeight = 32; // Isometric tile height
+        const originalTileWidth = 64; // Original isometric tile width
+        const originalTileHeight = 32; // Original isometric tile height
+        const tileWidth = originalTileWidth * 4; // Scaled width
+        const tileHeight = originalTileHeight * 4; // Scaled height
         const tilesPerRow = 8; // Number of tiles in one row of the tile sheet
 
-        // Level data (example 2D array of tile indices)
+        // Level data (adjusted to recreate Background.PNG layout)
         const level = [
-            [0, 1, 2, 3, 4],
-            [1, 2, 3, 4, 5],
-            [2, 3, 4, 5, 6],
-            [3, 4, 5, 6, 7],
-            [4, 5, 6, 7, 8]
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 10, 11],
+            [12, 13, 14, 15],
         ];
 
         // Player properties
@@ -74,22 +75,22 @@
 
         // Cut out and draw a single tile
         function drawTile(tileIndex, x, y) {
-            const tileX = (tileIndex % tilesPerRow) * tileWidth;
-            const tileY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
+            const tileX = (tileIndex % tilesPerRow) * originalTileWidth;
+            const tileY = Math.floor(tileIndex / tilesPerRow) * originalTileHeight;
 
             ctx.drawImage(
                 tileImage,
                 tileX, tileY, // Source position on the sprite sheet
-                tileWidth, tileHeight, // Source size
+                originalTileWidth, originalTileHeight, // Source size
                 x, y, // Destination position
-                tileWidth, tileHeight // Destination size
+                tileWidth, tileHeight // Destination size (scaled)
             );
         }
 
         // Draw the entire level in a diamond pattern
         function drawLevel() {
             const startX = canvas.width / 2; // Center of the canvas horizontally
-            const startY = 100; // Top of the level
+            const startY = 50; // Top of the level
 
             for (let row = 0; row < level.length; row++) {
                 for (let col = 0; col < level[row].length; col++) {
