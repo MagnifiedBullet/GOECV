@@ -29,23 +29,23 @@
     </style>
 </head>
 <body>
-    <h1>The Garden of Eeden</h1>
+    <h1>The Garden of Eeden</h1> <!-- Game title -->
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Load images for player, joystick, and buttons
+        // Sprite sheets
         const playerImage = new Image();
         const joystickImage = new Image();
         const buttonsImage = new Image();
         
         playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
         joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
-        buttonsImage.src = 'https://github.com/MagnifiedBullet/GOECV/blob/main/Assets/Xbuttonsplus.png';
+        buttonsImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Xbuttonsplus.png';
 
-        // Variables for game state
+        // Game state variables
         let assetsLoaded = 0;
         const totalAssets = 3;  // Total number of assets to load
 
@@ -53,8 +53,9 @@
         const player = { x: 400, y: 300, width: 32, height: 32, speed: 2, frameX: 0, frameY: 0 };
         const joystick = { x: 100, y: canvas.height - 150, radius: 50 };
         const buttons = {
-            xButton: { x: canvas.width - 120, y: canvas.height - 120, width: 100, height: 100, currentFrame: 0, isPressed: false },
-            squareButton: { x: canvas.width - 120, y: canvas.height - 240, width: 100, height: 100, currentFrame: 0, isPressed: false }
+            x: canvas.width - 120,
+            xButton: { y: canvas.height - 120, width: 100, height: 100, currentFrame: 0, isPressed: false },
+            squareButton: { y: canvas.height - 240, width: 100, height: 100, currentFrame: 0, isPressed: false }
         };
 
         // Function to check if all assets are loaded
@@ -98,7 +99,7 @@
                 buttonsImage,
                 buttons.xButton.currentFrame * buttons.xButton.width, 0,
                 buttons.xButton.width, buttons.xButton.height,
-                buttons.xButton.x, buttons.xButton.y,
+                buttons.x, buttons.xButton.y,
                 buttons.xButton.width, buttons.xButton.height
             );
 
@@ -107,12 +108,12 @@
                 buttonsImage,
                 buttons.squareButton.currentFrame * buttons.squareButton.width, 0,
                 buttons.squareButton.width, buttons.squareButton.height,
-                buttons.squareButton.x, buttons.squareButton.y,
+                buttons.x, buttons.squareButton.y,
                 buttons.squareButton.width, buttons.squareButton.height
             );
         }
 
-        // Function to animate the button frames
+        // Animate button frames
         function animateButton(button) {
             if (button.isPressed) {
                 if (button.currentFrame < 2) button.currentFrame++; // Move forward through frames
@@ -127,20 +128,18 @@
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            // Check for X button click
             if (
-                mouseX >= buttons.xButton.x &&
-                mouseX <= buttons.xButton.x + buttons.xButton.width &&
+                mouseX >= buttons.x &&
+                mouseX <= buttons.x + buttons.xButton.width &&
                 mouseY >= buttons.xButton.y &&
                 mouseY <= buttons.xButton.y + buttons.xButton.height
             ) {
                 buttons.xButton.isPressed = true;
             }
 
-            // Check for Square button click
             if (
-                mouseX >= buttons.squareButton.x &&
-                mouseX <= buttons.squareButton.x + buttons.squareButton.width &&
+                mouseX >= buttons.x &&
+                mouseX <= buttons.x + buttons.squareButton.width &&
                 mouseY >= buttons.squareButton.y &&
                 mouseY <= buttons.squareButton.y + buttons.squareButton.height
             ) {
