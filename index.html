@@ -25,17 +25,32 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Player sprite image
+        // Player sprite sheet
         const playerImage = new Image();
-        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/player.png';
+        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
 
         // Player properties
         const player = {
             x: canvas.width / 2 - 16,
             y: canvas.height / 2 - 16,
             width: 32,
-            height: 32,
-            speed: 5
+            height: 16, // Reduced height to make the player less than half a block tall
+            speed: 5,
+            direction: 'down', // Default direction
+            frameX: 0,
+            frameY: 0
+        };
+
+        // Directions to frame mapping
+        const directions = {
+            up: 3,
+            down: 0,
+            left: 1,
+            right: 2,
+            nw: 4, // NorthWest
+            ne: 5, // NorthEast
+            sw: 6, // SouthWest
+            se: 7  // SouthEast
         };
 
         // Key press tracking
@@ -59,18 +74,61 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Update player position
-            if (keys.ArrowUp) player.y -= player.speed;
-            if (keys.ArrowDown) player.y += player.speed;
-            if (keys.ArrowLeft) player.x -= player.speed;
-            if (keys.ArrowRight) player.x += player.speed;
+            // Update player position and direction
+            if (keys.ArrowUp && keys.ArrowLeft) {
+                player.x -= player.speed / Math.sqrt(2);
+                player.y -= player.speed / Math.sqrt(2);
+                player.direction = 'nw';
+            } else if (keys.ArrowUp && keys.ArrowRight) {
+                player.x += player.speed / Math.sqrt(2);
+                player.y -= player.speed / Math.sqrt(2);
+                player.direction = 'ne';
+            } else if (keys.ArrowDown && keys.ArrowLeft) {
+                player.x -= player.speed / Math.sqrt(2);
+                player.y += player.speed / Math.sqrt(2);
+                player.direction = 'sw';
+            } else if (keys.ArrowDown && keys.ArrowRight) {
+                player.x += player.speed / Math.sqrt(2);
+                player.y += player.speed / Math.sqrt(2);
+                player.direction = 'se';
+            } else {
+                if (keys.ArrowUp) {
+                    player.y -= player.speed;
+                    player.direction = 'up';
+                }
+                if (keys.ArrowDown) {
+                    player.y += player.speed;
+                    player.direction = 'down';
+                }
+                if (keys.ArrowLeft) {
+                    player.x -= player.speed;
+                    player.direction = 'left';
+                }
+                if (keys.ArrowRight) {
+                    player.x += player.speed;
+                    player.direction = 'right';
+                }
+            }
 
             // Prevent player from going out of bounds
             player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
             player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
+            // Update player sprite frame
+            player.frameY = directions[player.direction];
+
             // Draw player
-            ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+            ctx.drawImage(
+                playerImage,
+                player.frameX * player.width, // Source X
+                player.frameY * player.height, // Source Y
+                player.width, // Source Width
+                32, // Source Height remains consistent for sprite sheet
+                player.x, // Destination X
+                player.y, // Destination Y
+                player.width, // Destination Width
+                player.height // Destination Height
+            );
 
             requestAnimationFrame(gameLoop);
         }
