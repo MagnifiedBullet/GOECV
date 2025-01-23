@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Isometric Joystick Game</title>
+    <title>The Garden of Eeden</title>
     <style>
         body {
             background-color: #1e1e2c;
@@ -14,6 +14,8 @@
         canvas {
             display: block;
             margin: auto;
+            background: url('https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG') no-repeat center center;
+            background-size: cover;
         }
         h1 {
             position: absolute;
@@ -34,43 +36,30 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Load images
+        // Load assets
+        const playerImage = new Image();
         const joystickImage = new Image();
+        const buttonsImage = new Image();
+
+        playerImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Characters/Red.png';
         joystickImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Joystick.png';
-        const backgroundImage = new Image();
-        backgroundImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Background.PNG';
+        buttonsImage.src = 'https://raw.githubusercontent.com/MagnifiedBullet/GOECV/main/Assets/Xbuttonsplus.png';
 
         // Game variables
-        const player = { x: 400, y: 300, width: 32, height: 32, speed: 2 };
-        const joystick = {
-            x: 100, // Bottom-left position
-            y: canvas.height - 150,
-            radius: 50,
-            frameSize: 128, // Frame size in the sprite sheet
-            frameX: 1, // Start at idle (second row, second column)
-            frameY: 1,
-            isActive: false, // Track whether the invisible joystick is being used
-            touchStartX: 0,
-            touchStartY: 0,
-            touchMoveX: 0,
-            touchMoveY: 0,
+        const player = { x: 400, y: 300, width: 32, height: 32, frameX: 0, frameY: 0, speed: 2 };
+        const joystick = { x: 100, y: canvas.height - 150, radius: 50, frameSize: 128, frameX: 1, frameY: 1 };
+        const buttons = {
+            x: canvas.width - 120,
+            xButton: { y: canvas.height - 120, width: 100, height: 100, frame: 0, isPressed: false },
+            squareButton: { y: canvas.height - 240, width: 100, height: 100, frame: 0, isPressed: false },
         };
 
-        const directions = {
-            idle: [1, 1],
-            nw: [0, 0],
-            n: [0, 1],
-            ne: [0, 2],
-            w: [1, 0],
-            e: [1, 2],
-            sw: [2, 0],
-            s: [2, 1],
-            se: [2, 2],
-        };
+        // Keyboard input tracking
+        const keys = { w: false, a: false, s: false, d: false };
 
-        // Ensure images are loaded before starting
+        // Ensure all assets are loaded
         let assetsLoaded = 0;
-        const totalAssets = 2;
+        const totalAssets = 3;
 
         function checkAssetsLoaded() {
             assetsLoaded++;
@@ -79,106 +68,86 @@
             }
         }
 
+        playerImage.onload = checkAssetsLoaded;
         joystickImage.onload = checkAssetsLoaded;
-        backgroundImage.onload = checkAssetsLoaded;
+        buttonsImage.onload = checkAssetsLoaded;
 
-        // Draw background
-        function drawBackground() {
-            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        // Draw player
+        function drawPlayer() {
+            ctx.drawImage(
+                playerImage,
+                player.frameX * player.width, player.frameY * player.height,
+                player.width, player.height,
+                player.x, player.y,
+                player.width, player.height
+            );
         }
 
-        // Draw the visual joystick
+        // Draw joystick
         function drawJoystick() {
             ctx.drawImage(
                 joystickImage,
                 joystick.frameX * joystick.frameSize, joystick.frameY * joystick.frameSize,
                 joystick.frameSize, joystick.frameSize,
-                joystick.x - joystick.frameSize / 2, joystick.y - joystick.frameSize / 2,
-                joystick.frameSize, joystick.frameSize
+                joystick.x - joystick.radius, joystick.y - joystick.radius,
+                joystick.radius * 2, joystick.radius * 2
             );
         }
 
-        // Handle invisible joystick input
-        function handleJoystickInput(deltaX, deltaY) {
-            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const angle = Math.atan2(deltaY, deltaX);
+        // Draw buttons
+        function drawButtons() {
+            ctx.drawImage(
+                buttonsImage,
+                buttons.xButton.frame * buttons.xButton.width, 0,
+                buttons.xButton.width, buttons.xButton.height,
+                buttons.x, buttons.xButton.y,
+                buttons.xButton.width, buttons.xButton.height
+            );
 
-            // Check direction based on angle
-            if (distance > 10) {
-                if (angle < -2.356 && angle > -3.142) {
-                    joystick.frameX = directions.nw[1];
-                    joystick.frameY = directions.nw[0];
-                    player.x -= player.speed / Math.sqrt(2);
-                    player.y -= player.speed / Math.sqrt(2);
-                } else if (angle < -0.785 && angle > -2.356) {
-                    joystick.frameX = directions.n[1];
-                    joystick.frameY = directions.n[0];
-                    player.y -= player.speed;
-                } else if (angle < 0 && angle > -0.785) {
-                    joystick.frameX = directions.ne[1];
-                    joystick.frameY = directions.ne[0];
-                    player.x += player.speed / Math.sqrt(2);
-                    player.y -= player.speed / Math.sqrt(2);
-                } else if (angle > 0 && angle < 0.785) {
-                    joystick.frameX = directions.se[1];
-                    joystick.frameY = directions.se[0];
-                    player.x += player.speed / Math.sqrt(2);
-                    player.y += player.speed / Math.sqrt(2);
-                } else if (angle > 0.785 && angle < 2.356) {
-                    joystick.frameX = directions.s[1];
-                    joystick.frameY = directions.s[0];
-                    player.y += player.speed;
-                } else if (angle > 2.356 && angle < 3.142) {
-                    joystick.frameX = directions.sw[1];
-                    joystick.frameY = directions.sw[0];
-                    player.x -= player.speed / Math.sqrt(2);
-                    player.y += player.speed / Math.sqrt(2);
-                }
-            } else {
-                joystick.frameX = directions.idle[1];
-                joystick.frameY = directions.idle[0];
-            }
+            ctx.drawImage(
+                buttonsImage,
+                buttons.squareButton.frame * buttons.squareButton.width, 0,
+                buttons.squareButton.width, buttons.squareButton.height,
+                buttons.x, buttons.squareButton.y,
+                buttons.squareButton.width, buttons.squareButton.height
+            );
         }
 
-        // Event listeners for touch input
-        canvas.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            joystick.touchStartX = touch.clientX - rect.left;
-            joystick.touchStartY = touch.clientY - rect.top;
-
-            // Activate the joystick if touched in the joystick area
-            const dx = joystick.touchStartX - joystick.x;
-            const dy = joystick.touchStartY - joystick.y;
-            if (Math.sqrt(dx ** 2 + dy ** 2) <= joystick.radius) {
-                joystick.isActive = true;
-            }
+        // Handle keyboard input for player movement
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'w') keys.w = true;
+            if (e.key === 'a') keys.a = true;
+            if (e.key === 's') keys.s = true;
+            if (e.key === 'd') keys.d = true;
         });
 
-        canvas.addEventListener('touchmove', (e) => {
-            if (joystick.isActive) {
-                const touch = e.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                joystick.touchMoveX = touch.clientX - rect.left;
-                joystick.touchMoveY = touch.clientY - rect.top;
-
-                const deltaX = joystick.touchMoveX - joystick.touchStartX;
-                const deltaY = joystick.touchMoveY - joystick.touchStartY;
-
-                handleJoystickInput(deltaX, deltaY);
-            }
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'w') keys.w = false;
+            if (e.key === 'a') keys.a = false;
+            if (e.key === 's') keys.s = false;
+            if (e.key === 'd') keys.d = false;
         });
 
-        canvas.addEventListener('touchend', () => {
-            joystick.isActive = false;
-        });
+        function updatePlayer() {
+            if (keys.w) player.y -= player.speed;
+            if (keys.a) player.x -= player.speed;
+            if (keys.s) player.y += player.speed;
+            if (keys.d) player.x += player.speed;
+        }
 
         // Game loop
         function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+
+            // Draw game elements
+            drawPlayer();
             drawJoystick();
-            requestAnimationFrame(gameLoop);
+            drawButtons();
+
+            // Update game logic
+            updatePlayer();
+
+            requestAnimationFrame(gameLoop); // Repeat the loop
         }
     </script>
 </body>
